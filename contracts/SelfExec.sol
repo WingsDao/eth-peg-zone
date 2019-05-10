@@ -1,4 +1,4 @@
-pragma solidity ^0.5.1;
+pragma solidity ^0.5.8;
 
 /// @title  Helper to allow call functions only by contract itself
 /// @notice Use if you want to allow execute function only by contract itself
