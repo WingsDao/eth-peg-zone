@@ -3,7 +3,8 @@
     "description": "Wings Peggy based on PoA goverement implementation for Wings blockchain",
     "version": "1.0.0",
     "dependencies": {
-        "openzeppelin-solidity": "^2.2.0"
+        "openzeppelin-solidity": "^2.2.0",
+        "truffle": "^5.0.17"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
