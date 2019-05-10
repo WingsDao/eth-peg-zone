@@ -1,5 +1,13 @@
 {
-  "dependencies": {
-    "openzeppelin-solidity": "^2.2.0"
-  }
+    "name": "wings-peggy",
+    "description": "Wings Peggy based on PoA goverement implementation for Cosmos SDK",
+    "version": "1.0.0",
+    "dependencies": {
+        "openzeppelin-solidity": "^2.2.0"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Wings Stiftung",
+    "license": "UNLICENSED"
 }
