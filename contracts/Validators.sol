@@ -5,6 +5,19 @@ import "./SelfExec.sol";
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state
 contract Validators is SelfExec {
+    /// @notice            Happens when new validator added
+    /// @param  _validator Validator that just added
+    event ADDED_VALIDATOR(address _validator);
+
+    /// @notice               Happens when validator replaced
+    /// @param  _oldValidator Validator that replaced with new one
+    /// @param  _newValidator Validator that just added
+    event REPLACED_VALIDATOR(address _oldValidator, address _newValidator);
+
+    /// @notice             Happens when validator removed from list of validators
+    /// @param  _validator  Validator that just removed
+    event REMOVED_VALIDATOR(address _validator);
+
     /// @notice Maximum amount of validators
     uint256 constant MAX_VALIDATORS = 11;
 
@@ -57,6 +70,7 @@ contract Validators is SelfExec {
         validators.push(_validator);
         isValidator[_validator] = true;
 
+        emit ADDED_VALIDATOR(_validator);
         return true;
     }
 
@@ -88,6 +102,7 @@ contract Validators is SelfExec {
             }
         }
 
+        emit REPLACED_VALIDATOR(_validator, _newValidator);
         return true;
     }
 
@@ -114,6 +129,8 @@ contract Validators is SelfExec {
         }
 
         validators.length -= 1;
+
+        emit REMOVED_VALIDATOR(_validator);
         return true;
     }
 }
