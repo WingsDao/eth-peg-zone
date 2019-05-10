@@ -1,6 +1,6 @@
 {
     "name": "wings-peggy",
-    "description": "Wings Peggy based on PoA goverement implementation for Cosmos SDK",
+    "description": "Wings Peggy based on PoA goverement implementation for Wings blockchain",
     "version": "1.0.0",
     "dependencies": {
         "openzeppelin-solidity": "^2.2.0"
