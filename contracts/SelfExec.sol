@@ -4,6 +4,7 @@ pragma solidity ^0.5.1;
 /// @notice Use if you want to allow execute function only by contract itself
 /// @dev    Inherit this interface to contract
 contract SelfExec {
+    /// @notice Allows to run function only by contract itself
     modifier onlySelf() {
         require(msg.sender == address(this));
         _;

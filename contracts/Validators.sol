@@ -5,28 +5,34 @@ import "./SelfExec.sol";
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state
 contract Validators is SelfExec {
-    /// @notice maximum amount of validators
+    /// @notice Maximum amount of validators
     uint256 constant MAX_VALIDATORS = 11;
 
-    /// @notice minimum amount of validators
+    /// @notice Minimum amount of validators
     uint256 constant MIN_VALIDATORS = 3;
 
-    /// @notice list of active validators
+    /// @notice List of active validators
     mapping(address => bool) public isValidator;
 
-    /// @notice array of all validators and their addressess
+    /// @notice Array of all validators and their addressess
     address[] public validators;
 
+    /// @notice            Check if validator already exists in smart contract
+    /// @param  _validator Address of validator to check
     modifier validatorExists(address _validator) {
         require(isValidator[_validator]);
         _;
     }
 
+    /// @notice            Check if validator doesn't exist in smart contract
+    /// @param  _validator Address of validator to check
     modifier validatorDoesntExist(address _validator) {
         require(!isValidator[_validator]);
         _;
     }
 
+    /// @notice             Initialize smart contract with validators array
+    /// @param  _validators Initial validators array to initialize
     constructor(address[] memory _validators) public {
         require(_validators.length >= MIN_VALIDATORS);
 
@@ -35,6 +41,10 @@ contract Validators is SelfExec {
         }
     }
 
+    /// @notice            Adding validator to validators list
+    /// @param  _validator Address of validator to add
+    /// @dev               Possible to execute only by contract itself
+    /// @return            Returns boolean depends on success or fail
     function addValidator(address _validator)
         public
         onlySelf()
@@ -50,6 +60,11 @@ contract Validators is SelfExec {
         return true;
     }
 
+    /// @notice Replace current validator with another one
+    /// @param  _validator Address of validator to replace
+    /// @param  _validator Address of new validator to put
+    /// @dev               Possible to execute only by contract itself
+    /// @return            Returns boolean depends on success or fail
     function replaceValidator(
         address _validator,
         address _newValidator
@@ -76,6 +91,10 @@ contract Validators is SelfExec {
         return true;
     }
 
+    /// @notice Remove existing validator
+    /// @param  _validator Address of existing validator to remove
+    /// @dev               Possible to execute only by contract itself
+    /// @return            Returns boolean depends on success or fail
     function removeValidator(address _validator)
         public
         onlySelf()
