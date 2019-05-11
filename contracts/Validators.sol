@@ -7,16 +7,16 @@ import "./SelfExec.sol";
 contract Validators is SelfExec {
     /// @notice            Happens when new validator added
     /// @param  _validator Validator that just added
-    event ADDED_VALIDATOR(address _validator);
+    event ADDED_VALIDATOR(address indexed _validator);
 
     /// @notice               Happens when validator replaced
     /// @param  _oldValidator Validator that replaced with new one
     /// @param  _newValidator Validator that just added
-    event REPLACED_VALIDATOR(address _oldValidator, address _newValidator);
+    event REPLACED_VALIDATOR(address indexed _oldValidator, address indexed _newValidator);
 
     /// @notice             Happens when validator removed from list of validators
     /// @param  _validator  Validator that just removed
-    event REMOVED_VALIDATOR(address _validator);
+    event REMOVED_VALIDATOR(address indexed _validator);
 
     /// @notice Maximum amount of validators
     uint256 constant MAX_VALIDATORS = 11;

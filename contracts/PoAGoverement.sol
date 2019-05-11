@@ -167,24 +167,6 @@ contract PoAGoverment is Validators {
         return false;
     }
 
-    /// @notice                 Returns the confirmation status of a transaction
-    /// @param   _transactionId Transaction ID
-    /// @return                 Confirmation status
-    function isConfirmed(uint256 _transactionId)
-        public
-        view
-        returns (bool)
-    {
-        uint256 count = 0;
-        for (uint256 i = 0; i < validators.length; i++) {
-            if (confirmations[_transactionId][validators[i]])
-                count += 1;
-
-            if (count >= required)
-                return true;
-        }
-    }
-
     /// @notice               Doing a call to this contract with data from transaction
     /// @param   _dataLength  Length of data to do a call
     /// @param   _data        Data itself
@@ -234,5 +216,62 @@ contract PoAGoverment is Validators {
     function updateRequirement(uint256 _validatorsCount) private {
         required = _validatorsCount / 2 + 1;
         emit REQUIREMENT_CHANGED(required);
+    }
+
+    /// @notice            Returns total number of transactions after filers are applied
+    /// @param   _pending  Include pending transactions
+    /// @param   _executed Include executed transactions
+    /// @return            Total number of transactions after filters are applied
+    function getTransactionCount(bool _pending, bool _executed)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < transactionCount; i++)
+            if (_pending && !transactions[i].executed
+                || _executed && transactions[i].executed)
+                count += 1;
+
+        return count;
+    }
+
+    /// @notice                 Returns the confirmation status of a transaction
+    /// @param   _transactionId Transaction ID
+    /// @return                 Confirmation status
+    function isConfirmed(uint256 _transactionId)
+        public
+        view
+        returns (bool)
+    {
+        uint256 count = 0;
+
+        for (uint256 i = 0; i < validators.length; i++) {
+            if (confirmations[_transactionId][validators[i]])
+                count += 1;
+
+            if (count >= required)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// @notice                Returns number of confirmations of a transaction
+    /// @param  _transactionId Transaction ID
+    /// @return                Number of confirmations
+    function getConfirmationCount(uint256 _transactionId)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 count = 0;
+
+        for (uint i = 0; i < validators.length; i++)
+            if (confirmations[_transactionId][validators[i]])
+                count += 1;
+
+        return count;
     }
 }
