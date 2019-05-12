@@ -113,8 +113,6 @@ contract PoAGoverment is Validators {
         return transactionId;
     }
 
-    // validate tx that we confirm by hash
-
     /// @notice                Allows an validator to confirm a transaction
     /// @param  _transactionId Id of transaction
     /// @param  _hash          Hash of transaction data
