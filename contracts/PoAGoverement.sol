@@ -33,9 +33,16 @@ contract PoAGoverment is Validators {
     /// @param _required New amount of validators confirmations to execute transaction
     event REQUIREMENT_CHANGED(uint256 _required);
 
+    /// @notice Destination of call
+    enum Destination {
+        SELF,
+        TARGET
+    }
+
     /// @notice Trasaction structure that could be posted by validator
     struct Transaction {
         address creator;
+        address destination;
         bytes data;
         bool executed;
         bytes32 hash;
@@ -52,6 +59,9 @@ contract PoAGoverment is Validators {
 
     /// @notice Confirmations list for each transaction
     mapping(uint256 => mapping(address => bool)) public confirmations;
+
+    /// @notice Target contract, that will accept trasaction calls from validators
+    address public target;
 
     /// @notice               Check if transaction confirmed by validator
     /// @param _transactionId Id of transaction to verify if it's confirmed
@@ -93,19 +103,32 @@ contract PoAGoverment is Validators {
 
     /// @notice            Constructor, inherits by validators contract
     /// @param _validators Array of validators
-    constructor(address[] memory _validators) Validators(_validators) public {
+    constructor(address[] memory _validators, address _target) Validators(_validators) public {
+        require(_target != address(0));
+
+        target = _target;
+
         updateRequirement(_validators.length);
     }
 
     /// @notice       Allows an validator to submit and confirm a transaction
     /// @param  _data Transaction data payload
     /// @return       Returns transaction ID
-    function submitTransaction(bytes memory _data)
+    function submitTransaction(uint256 _destination, bytes memory _data)
         public
         validatorExists(msg.sender)
         returns (uint256)
     {
-        uint256 transactionId = addTransaction(_data);
+        address destinationAddress;
+        Destination dest = Destination(_destination);
+
+        if (dest == Destination.TARGET) {
+            destinationAddress = target;
+        } else {
+            destinationAddress = address(this);
+        }
+
+        uint256 transactionId = addTransaction(destinationAddress, _data);
         emit TX_SUBMISSED(msg.sender, transactionId);
 
         confirmTransaction(transactionId, transactions[transactionId].hash);
@@ -166,7 +189,7 @@ contract PoAGoverment is Validators {
         if (isConfirmed(_transactionId)) {
             Transaction storage txn = transactions[_transactionId];
             txn.executed = true;
-            if (external_call(txn.data.length, txn.data)) {
+            if (external_call(txn.destination, txn.data.length, txn.data)) {
                 emit TX_EXECUTED(_transactionId);
                 return false;
             }
@@ -184,9 +207,8 @@ contract PoAGoverment is Validators {
     /// @param   _dataLength  Length of data to do a call
     /// @param   _data        Data itself
     /// @return               Boolean depends on success
-    function external_call(uint256 _dataLength, bytes memory _data) internal returns (bool) {
+    function external_call(address _destination, uint256 _dataLength, bytes memory _data) internal returns (bool) {
         bool result;
-        address self = address(this);
 
         assembly {
             let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
@@ -195,7 +217,7 @@ contract PoAGoverment is Validators {
                 sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
                                    // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
                                    // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
-                self,
+                _destination,
                 0,
                 d,
                 _dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
@@ -209,17 +231,20 @@ contract PoAGoverment is Validators {
     /// @notice        Adds a new transaction to the transaction mapping, if transaction does not exist yet
     /// @param   _data Transaction data payload
     /// @return        Returns transaction ID
-    function addTransaction(bytes memory _data)
+    function addTransaction(address _destination, bytes memory _data)
         internal
         returns (uint256)
     {
         uint256 transactionId = transactionCount;
+
         transactions[transactionId] = Transaction({
             creator: msg.sender,
             data: _data,
             executed: false,
-            hash: keccak256(abi.encodePacked(_data))
+            hash: keccak256(abi.encodePacked(_destination, _data)),
+            destination: _destination
         });
+
         transactionCount += 1;
 
         return transactionId;
