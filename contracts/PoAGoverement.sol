@@ -38,6 +38,7 @@ contract PoAGoverment is Validators {
         address creator;
         bytes data;
         bool executed;
+        bytes32 hash;
     }
 
     /// @notice Amount of confirmations to execute transaction
@@ -82,6 +83,14 @@ contract PoAGoverment is Validators {
         _;
     }
 
+    /// @notice                 Check if transaction hashes matches for specific transaction id
+    /// @param   _transactionId Id of transaction
+    //  @param   _hash          Hash of transaction data to match
+    modifier transactionHashMatch(uint256 _transactionId, bytes32 _hash) {
+        require(transactions[_transactionId].hash == _hash);
+        _;
+    }
+
     /// @notice            Constructor, inherits by validators contract
     /// @param _validators Array of validators
     constructor(address[] memory _validators) Validators(_validators) public {
@@ -99,7 +108,7 @@ contract PoAGoverment is Validators {
         uint256 transactionId = addTransaction(_data);
         emit TX_SUBMISSED(msg.sender, transactionId);
 
-        confirmTransaction(transactionId);
+        confirmTransaction(transactionId, transactions[transactionId].hash);
 
         return transactionId;
     }
@@ -108,29 +117,33 @@ contract PoAGoverment is Validators {
 
     /// @notice                Allows an validator to confirm a transaction
     /// @param  _transactionId Id of transaction
+    /// @param  _hash          Hash of transaction data
     /// @return                Returns boolean depends on success
-    function confirmTransaction(uint256 _transactionId)
+    function confirmTransaction(uint256 _transactionId, bytes32 _hash)
         public
         validatorExists(msg.sender)
         transactionExists(_transactionId)
+        transactionHashMatch(_transactionId, _hash)
         notConfirmed(_transactionId, msg.sender)
         returns (bool)
     {
         confirmations[_transactionId][msg.sender] = true;
         emit TX_CONFIRMED(msg.sender, _transactionId);
 
-        executeTransaction(_transactionId);
+        executeTransaction(_transactionId, transactions[_transactionId].hash);
 
         return true;
     }
 
     /// @notice                Allows an validator to revoke a confirmation for a transaction
     /// @param  _transactionId Transaction ID
+    /// @param  _hash          Hash of transaction data
     /// @return                Returns boolean depends on success
-    function revokeConfirmation(uint256 _transactionId)
+    function revokeConfirmation(uint256 _transactionId, bytes32 _hash)
         public
         validatorExists(msg.sender)
         confirmed(_transactionId, msg.sender)
+        transactionHashMatch(_transactionId, _hash)
         notExecuted(_transactionId)
         returns (bool)
     {
@@ -142,11 +155,13 @@ contract PoAGoverment is Validators {
 
     /// @notice                Allows any validator to execute a confirmed transaction
     /// @param  _transactionId Transaction ID
+    /// @param  _hash          Hash of transactio data
     /// @return                Returns boolean depends on success
-    function executeTransaction(uint256 _transactionId)
+    function executeTransaction(uint256 _transactionId, bytes32 _hash)
         public
         validatorExists(msg.sender)
         confirmed(_transactionId, msg.sender)
+        transactionHashMatch(_transactionId, _hash)
         notExecuted(_transactionId)
         returns (bool)
     {
@@ -204,7 +219,8 @@ contract PoAGoverment is Validators {
         transactions[transactionId] = Transaction({
             creator: msg.sender,
             data: _data,
-            executed: false
+            executed: false,
+            hash: keccak256(abi.encodePacked(_data))
         });
         transactionCount += 1;
 
