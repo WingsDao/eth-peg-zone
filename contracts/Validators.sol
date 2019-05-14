@@ -1,6 +1,6 @@
 pragma solidity ^0.5.8;
 
-import "./SelfExec.sol";
+import "./helpers/SelfExec.sol";
 
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state

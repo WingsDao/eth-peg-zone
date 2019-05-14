@@ -103,7 +103,13 @@ contract PoAGoverment is Validators {
 
     /// @notice            Constructor, inherits by validators contract
     /// @param _validators Array of validators
-    constructor(address[] memory _validators, address _target) Validators(_validators) public {
+    constructor(
+        address[] memory _validators,
+        address _target
+    )
+        Validators(_validators)
+        public
+    {
         require(_target != address(0));
 
         target = _target;
@@ -114,7 +120,10 @@ contract PoAGoverment is Validators {
     /// @notice       Allows an validator to submit and confirm a transaction
     /// @param  _data Transaction data payload
     /// @return       Returns transaction ID
-    function submitTransaction(uint256 _destination, bytes memory _data)
+    function submitTransaction(
+        uint256 _destination,
+        bytes memory _data
+    )
         public
         validatorExists(msg.sender)
         returns (uint256)
@@ -140,7 +149,10 @@ contract PoAGoverment is Validators {
     /// @param  _transactionId Id of transaction
     /// @param  _hash          Hash of transaction data
     /// @return                Returns boolean depends on success
-    function confirmTransaction(uint256 _transactionId, bytes32 _hash)
+    function confirmTransaction(
+        uint256 _transactionId,
+        bytes32 _hash
+    )
         public
         validatorExists(msg.sender)
         transactionExists(_transactionId)
@@ -160,7 +172,10 @@ contract PoAGoverment is Validators {
     /// @param  _transactionId Transaction ID
     /// @param  _hash          Hash of transaction data
     /// @return                Returns boolean depends on success
-    function revokeConfirmation(uint256 _transactionId, bytes32 _hash)
+    function revokeConfirmation(
+        uint256 _transactionId,
+        bytes32 _hash
+    )
         public
         validatorExists(msg.sender)
         confirmed(_transactionId, msg.sender)
@@ -178,7 +193,10 @@ contract PoAGoverment is Validators {
     /// @param  _transactionId Transaction ID
     /// @param  _hash          Hash of transactio data
     /// @return                Returns boolean depends on success
-    function executeTransaction(uint256 _transactionId, bytes32 _hash)
+    function executeTransaction(
+        uint256 _transactionId,
+        bytes32 _hash
+    )
         public
         validatorExists(msg.sender)
         confirmed(_transactionId, msg.sender)
@@ -207,7 +225,14 @@ contract PoAGoverment is Validators {
     /// @param   _dataLength  Length of data to do a call
     /// @param   _data        Data itself
     /// @return               Boolean depends on success
-    function external_call(address _destination, uint256 _dataLength, bytes memory _data) internal returns (bool) {
+    function external_call(
+        address _destination,
+        uint256 _dataLength,
+        bytes memory _data
+    )
+        internal
+        returns (bool)
+    {
         bool result;
 
         assembly {
@@ -231,7 +256,10 @@ contract PoAGoverment is Validators {
     /// @notice        Adds a new transaction to the transaction mapping, if transaction does not exist yet
     /// @param   _data Transaction data payload
     /// @return        Returns transaction ID
-    function addTransaction(address _destination, bytes memory _data)
+    function addTransaction(
+        address _destination,
+        bytes memory _data
+    )
         internal
         returns (uint256)
     {
