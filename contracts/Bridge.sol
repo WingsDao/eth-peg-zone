@@ -5,6 +5,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
+import "./BankStorage.sol";
+
 /// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token
 /// @notice Using fallback function to exchange ETH and 'exchange' function for tokens
 /// @dev    Should has some goverement contract as owner
@@ -69,7 +71,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         uint256 minExchange;
         uint256 capacity;
         uint256 feePercentage;
+        uint256 balance;
     }
+
+    ///@notice Bank storage address
+    BankStorage public bankStorage;
 
     ///@notice Maximum fee percentage that validators can set, e.g. s9999=99.99%
     uint256 constant public MAX_FEE = 9999;
@@ -124,14 +130,19 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@param  _ethCapacity      Maximum capacity for ETH exchange
     ///@param  _ethMinAmount     Minimum amount of ETH exchange
     ///@param  _ethFeePercentage Percent fee of ETH exchange
+    ///@param  _bankStorage      Address of bank storage contract
     constructor(
         uint256 _ethCapacity,
         uint256 _ethMinAmount,
-        uint256 _ethFeePercentage
+        uint256 _ethFeePercentage,
+        address _bankStorage
     )
         public
-        Ownable()
     {
+        require(_bankStorage != address(0));
+
+        bankStorage = BankStorage(_bankStorage);
+
         ethIndex = addCurrency(
             address(0),
             _ethCapacity,
@@ -158,7 +169,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         whenNotPaused()
         currencyExistsById(_currencyId)
     {
-        Currency memory currency = currencies[_currencyId];
+        Currency storage currency = currencies[_currencyId];
         convertation(msg.sender, _amount, currency);
     }
 
@@ -180,22 +191,20 @@ contract Bridge is Ownable, ReentrancyGuard {
         nonReentrant()
         currencyExistsById(_currencyId)
     {
-        require(_gas > 0);
-        Currency memory currency = currencies[_currencyId];
+        Currency storage currency = currencies[_currencyId];
 
         require(_amount >= currency.minExchange);
+        currency.balance = currency.balance.sub(_amount);
 
-        if (_currencyId == ethIndex) {
-            (bool success,) = _recipient.call.value(_amount).gas(_gas)("");
-            require(success);
+        bankStorage.withdraw(currency.tokenContract, _recipient, _amount, _gas);
+        emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
+    }
 
-            emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
-        } else {
-            IERC20 token = IERC20(currency.tokenContract);
-            require(token.transfer(_recipient, _amount));
-
-            emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
-        }
+    ///@notice           We migrate bank storage to new owner
+    ///@param  _newOwner Address of new owner for bank storage
+    ///@dev              This is very basic migration, allowing to change owner of bank storage
+    function migration(address _newOwner) public onlyOwner() {
+        bankStorage.transferOwnership(_newOwner);
     }
 
     ///@notice                Add currency to currecies list
@@ -227,7 +236,8 @@ contract Bridge is Ownable, ReentrancyGuard {
             tokenContract: _tokenContract,
             minExchange:   _minExchange,
             capacity:      _capacity,
-            feePercentage: _feePercentage
+            feePercentage: _feePercentage,
+            balance:       0
         });
 
         tokenToCurrency[_tokenContract] = currenciesCount;
@@ -308,6 +318,19 @@ contract Bridge is Ownable, ReentrancyGuard {
         paused = false;
     }
 
+    ///@notice Get fee for specific currency and amount
+    function getFee(
+        uint256 _currencyId,
+        uint256 _amount
+    )
+        public
+        view
+        returns (uint256)
+    {
+        uint256 feePercentage = currencies[_currencyId].feePercentage;
+        return _amount * feePercentage / (MAX_FEE+1);
+    }
+
     ///@notice          Convertation function for ETH and tokens
     ///@param _spender  Address of account who spend ETH/tokens
     ///@param _amount   Amount to convert
@@ -316,24 +339,50 @@ contract Bridge is Ownable, ReentrancyGuard {
     function convertation(
         address _spender,
         uint256 _amount,
-        Currency memory _currency
+        Currency storage _currency
     )
         internal
     {
         require(_amount >= _currency.minExchange);
         uint256 currencyId = tokenToCurrency[_currency.tokenContract];
 
+        uint256 fee = getFee(currencyId, _amount);
+        uint256 realValue = _amount.sub(fee);
+
+        require(_currency.balance.add(realValue) <= _currency.capacity);
+        _currency.balance = _currency.balance.add(realValue);
+
         if (currencyId == ethIndex) {
             require(msg.value == _amount);
-            require(address(this).balance.add(_amount) <= _currency.capacity);
+
+            (bool success, ) = address(bankStorage)
+                .call
+                .value(_amount)
+                .gas(120000)(
+                    abi.encodeWithSignature(
+                        "deposit(address,uint256,uint256)",
+                        _currency.tokenContract,
+                        realValue,
+                        fee
+                    )
+                );
+
+
+            require(success);
 
             emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         } else {
             IERC20 token = IERC20(_currency.tokenContract);
 
-            require(token.balanceOf(address(this)).add(_amount) <= _currency.capacity);
             require(token.allowance(_spender, address(this)) >= _amount);
             require(token.transferFrom(_spender, address(this), _amount));
+            require(token.approve(address(bankStorage), _amount));
+
+            bankStorage.deposit(
+                _currency.tokenContract,
+                realValue,
+                fee
+            );
 
             emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         }
