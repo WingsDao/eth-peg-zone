@@ -267,8 +267,8 @@ contract BankStorage is Ownable, ReentrancyGuard {
         emit REMOVED_ACTIVE_VALIDATOR(_validator);
     }
 
-    ///@notice         Adding new raw currency to currencies list
-    ///@param   _token Address of token
+    ///@notice        Adding new raw currency to currencies list
+    ///@param  _token Address of token
     function addCurrency(
         address _token
     )
