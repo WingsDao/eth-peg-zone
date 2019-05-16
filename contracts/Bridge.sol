@@ -13,59 +13,59 @@ import "./BankStorage.sol";
 contract Bridge is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
-    ///@notice                 Happens when new token listed
-    ///@param   _tokenContract Contract of token that listed
-    ///@param   _currencyId    Id of currency
+    /// @notice                 Happens when new token listed
+    /// @param   _tokenContract Contract of token that listed
+    /// @param   _currencyId    Id of currency
     event ADDED_CURRENCY(
         address indexed _tokenContract,
         uint256 _currencyId
     );
 
-    ///@notice Happens whenn capacity of currency changed
-    ///@param  _currencyId  Id of currency
-    ///@param _newCapacity New capacity of currency
+    /// @notice Happens whenn capacity of currency changed
+    /// @param  _currencyId  Id of currency
+    /// @param _newCapacity New capacity of currency
     event CHANGED_CAPACITY(
         uint256 indexed _currencyId,
         uint256 _newCapacity
     );
 
-    ///@notice                  Happens when minimum amount of exchange for currency changed
-    ///@param   _currencyId     Id of currency
-    ///@param   _newMinExchange New minimum amount of currency to exchange
+    /// @notice                  Happens when minimum amount of exchange for currency changed
+    /// @param   _currencyId     Id of currency
+    /// @param   _newMinExchange New minimum amount of currency to exchange
     event CHANGED_MIN_EXCHANGE(
         uint256 indexed _currencyId,
         uint256 _newMinExchange
     );
 
-    ///@notice                   Happens when fee for convertation changed for currency
-    ///@param  _currencyId       Id of currency
-    ///@param  _newFeePercentage New fee percentage
+    /// @notice                   Happens when fee for convertation changed for currency
+    /// @param  _currencyId       Id of currency
+    /// @param  _newFeePercentage New fee percentage
     event CHANGED_FEE(
         uint256 indexed _currencyId,
         uint256 _newFeePercentage
     );
 
-    ///@notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
-    ///@param  _currencyId Id of currency
-    ///@param  _spender    Address of account who convert currency
-    ///@param  _amount     Amount of currency that will be converted
+    /// @notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
+    /// @param  _currencyId Id of currency
+    /// @param  _spender    Address of account who convert currency
+    /// @param  _amount     Amount of currency that will be converted
     event CURRENCY_EXCHANGED(
         uint256 indexed _currencyId,
         address indexed _spender,
         uint256 _amount
     );
 
-    ///@notice             Happens when goverement withdraw currency for converter
-    ///@param  _currencyId Id of currency
-    ///@param  _recipient  Address of account who will get currency
-    ///@param  _amount     Amount of currency
+    /// @notice             Happens when goverement withdraw currency for converter
+    /// @param  _currencyId Id of currency
+    /// @param  _recipient  Address of account who will get currency
+    /// @param  _amount     Amount of currency
     event CURRENCY_WITHDRAW(
         uint256 indexed _currencyId,
         address indexed _recipient,
         uint256 _amount
     );
 
-    ///@notice Describing currency structure
+    /// @notice Describing currency structure
     struct Currency {
         address tokenContract;
         uint256 minExchange;
@@ -74,44 +74,44 @@ contract Bridge is Ownable, ReentrancyGuard {
         uint256 balance;
     }
 
-    ///@notice Bank storage address
+    /// @notice Bank storage address
     BankStorage public bankStorage;
 
-    ///@notice Maximum fee percentage that validators can set, e.g. s9999=99.99%
+    /// @notice Maximum fee percentage that validators can set, e.g. 9999=99.99%
     uint256 constant public MAX_FEE = 9999;
 
-    ///@notice Detects is contract paused or not
+    /// @notice Detects is contract paused or not
     bool public paused;
 
-    ///@notice Total currencies counts
+    /// @notice Total currencies counts
     uint256 public currenciesCount;
 
-    ///@notice Reserved index for ETH currency
+    /// @notice Reserved index for ETH currency
     uint256 public ethIndex;
 
-    ///@notice All currencies list by index
+    /// @notice All currencies list by index
     mapping(uint256 => Currency) currencies;
 
-    ///@notice Token address to currency list
+    /// @notice Token address to currency list
     mapping(address => uint256) tokenToCurrency;
 
-    ///@notice Check if specific token address is currency
+    /// @notice Check if specific token address is currency
     mapping(address => bool) isCurrency;
 
-    ///@notice Should work only if contract is not paused
+    /// @notice Should work only if contract is not paused
     modifier whenNotPaused() {
         require(!paused);
         _;
     }
 
-    ///@notice Should work only if contract paused
+    /// @notice Should work only if contract paused
     modifier whenPaused() {
         require(paused);
         _;
     }
 
-    ///@notice             Check if currency exists by id of currency
-    ///@param  _currencyId Id of currency
+    /// @notice             Check if currency exists by id of currency
+    /// @param  _currencyId Id of currency
     modifier currencyExistsById(uint256 _currencyId) {
         if (_currencyId != ethIndex) {
             require(currencies[_currencyId].tokenContract != address(0));
@@ -119,19 +119,19 @@ contract Bridge is Ownable, ReentrancyGuard {
         _;
     }
 
-    ///@notice        Check if currency doesn't exist by address of currency token
-    ///@param  _token Address of token currency
+    /// @notice        Check if currency doesn't exist by address of currency token
+    /// @param  _token Address of token currency
     modifier currencyDoesntExist(address _token) {
         require(!isCurrency[_token]);
         _;
     }
 
-    ///@notice                   Constructor with basic parameters for ETH exchange
-    ///@param  _ethCapacity      Maximum capacity for ETH exchange
-    ///@param  _ethMinAmount     Minimum amount of ETH exchange
-    ///@param  _ethFeePercentage Percent fee of ETH exchange
-    ///@param  _bankStorage      Address of bank storage contract
-    ///@dev                      Move bank storage owner to this contract after initialization
+    /// @notice                   Constructor with basic parameters for ETH exchange
+    /// @param  _ethCapacity      Maximum capacity for ETH exchange
+    /// @param  _ethMinAmount     Minimum amount of ETH exchange
+    /// @param  _ethFeePercentage Percent fee of ETH exchange
+    /// @param  _bankStorage      Address of bank storage contract
+    /// @dev                      Move bank storage owner to this contract after initialization
     constructor(
         uint256 _ethCapacity,
         uint256 _ethMinAmount,
@@ -152,15 +152,15 @@ contract Bridge is Ownable, ReentrancyGuard {
         );
     }
 
-    ///@notice Payable function for ETH convertation
+    /// @notice Payable function for ETH convertation
     function () payable external {
         exchange(ethIndex, msg.value);
     }
 
-    ///@notice             Exchanges ETH or any token
-    ///@param  _currencyId Id of currency to exchange
-    ///@param  _amount     Amount of currency to exchange
-    ///@dev                Works only if contract not paused
+    /// @notice             Exchanges ETH or any token
+    /// @param  _currencyId Id of currency to exchange
+    /// @param  _amount     Amount of currency to exchange
+    /// @dev                Works only if contract not paused
     function exchange(
         uint256 _currencyId,
         uint256 _amount
@@ -174,11 +174,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         convertation(msg.sender, _amount, currency);
     }
 
-    ///@notice             Withdraw currency to recipient, could be called by owner only (goverement)
-    ///@param  _currencyId Id of currency
-    ///@param  _recipient  Recipient, who will recieve currency
-    ///@param  _amount     Amount to withdraw
-    ///@param  _gas        Gas limit fallback function (in case recipient is contract)
+    /// @notice             Withdraw currency to recipient, could be called by owner only (goverement)
+    /// @param  _currencyId Id of currency
+    /// @param  _recipient  Recipient, who will recieve currency
+    /// @param  _amount     Amount to withdraw
+    /// @param  _gas        Gas limit fallback function (in case recipient is contract)
     function withdraw(
         uint256 _currencyId,
         address payable _recipient,
@@ -200,19 +200,19 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
     }
 
-    ///@notice           We migrate bank storage to new owner
-    ///@param  _newOwner Address of new owner for bank storage
-    ///@dev              This is very basic migration, allowing to change owner of bank storage
+    /// @notice           We migrate bank storage to new owner
+    /// @param  _newOwner Address of new owner for bank storage
+    /// @dev              This is very basic migration, allowing to change owner of bank storage
     function migration(address _newOwner) public onlyOwner() {
         bankStorage.transferOwnership(_newOwner);
     }
 
-    ///@notice                Add currency to currecies list
-    ///@param  _tokenContract Contract of token
-    ///@param  _minExchange   Minimum amount to exchange in case of this currency
-    ///@param  _capacity      Maximum capacity of currency in this contract
-    ///@param  _feePercentage Fee percentage that validators take for exchange
-    ///@return                Return id of just added currency
+    /// @notice                Add currency to currecies list
+    /// @param  _tokenContract Contract of token
+    /// @param  _minExchange   Minimum amount to exchange in case of this currency
+    /// @param  _capacity      Maximum capacity of currency in this contract
+    /// @param  _feePercentage Fee percentage that validators take for exchange
+    /// @return                Return id of just added currency
     function addCurrency(
         address _tokenContract,
         uint256 _minExchange,
@@ -247,9 +247,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         return currenciesCount;
     }
 
-    ///@notice              Change capacity for specific owner
-    ///@param  _currencyId  Id of currency to change
-    ///@param  _newCapacity New capacity for provided currency
+    /// @notice              Change capacity for specific owner
+    /// @param  _currencyId  Id of currency to change
+    /// @param  _newCapacity New capacity for provided currency
     function changeCapacity(
         uint256 _currencyId,
         uint256 _newCapacity
@@ -265,9 +265,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_CAPACITY(_currencyId, _newCapacity);
     }
 
-    ///@notice                Change minimum amount to exchange for specific currency
-    ///@param _currencyId     Id of currency to change
-    ///@param _newMinExchange New minimum amount of currency to exchange
+    /// @notice                Change minimum amount to exchange for specific currency
+    /// @param _currencyId     Id of currency to change
+    /// @param _newMinExchange New minimum amount of currency to exchange
     function changeMinExchange(
         uint256 _currencyId,
         uint256 _newMinExchange
@@ -283,9 +283,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_MIN_EXCHANGE(_currencyId, _newMinExchange);
     }
 
-    ///@notice                   Change fee percentage for specific currency
-    ///@param  _currencyId       Id of currency to change
-    ///@param  _newFeePercentage New fee percentage for exchange provided currency
+    /// @notice                   Change fee percentage for specific currency
+    /// @param  _currencyId       Id of currency to change
+    /// @param  _newFeePercentage New fee percentage for exchange provided currency
     function changeFee(
         uint256 _currencyId,
         uint256 _newFeePercentage
@@ -302,20 +302,20 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_FEE(_currencyId, _newFeePercentage);
     }
 
-    ///@notice Pause contract, widthraw and exchange will be paused
+    /// @notice Pause contract, widthraw and exchange will be paused
     function pause() public onlyOwner() {
         paused = true;
     }
 
-    ///@notice Resume contract, indeed withdraw and exchange
+    /// @notice Resume contract, indeed withdraw and exchange
     function resume() public onlyOwner() {
         paused = false;
     }
 
-    ///@notice              Get fee for specific currency and amount
-    ///@param  _currencyId  Id of currency
-    ///@param  _amount      Amount of currency to calculate fee
-    ///@return             Fee amount
+    /// @notice              Get fee for specific currency and amount
+    /// @param  _currencyId  Id of currency
+    /// @param  _amount      Amount of currency to calculate fee
+    /// @return             Fee amount
     function getFee(
         uint256 _currencyId,
         uint256 _amount
@@ -328,11 +328,21 @@ contract Bridge is Ownable, ReentrancyGuard {
         return _amount * feePercentage / (MAX_FEE+1);
     }
 
-    ///@notice          Convertation function for ETH and tokens
-    ///@param _spender  Address of account who spend ETH/tokens
-    ///@param _amount   Amount to convert
-    ///@param _currency Currency to convert
-    ///@dev             Internal function
+    /// @notice Returns ETH fake token address (e.g. 0x0000...), just for compatibility
+    /// @return ETH token address
+    function getEthTokenAddress()
+        public
+        view
+        returns (address)
+    {
+        return currencies[ethIndex].tokenContract;
+    }
+
+    /// @notice          Convertation function for ETH and tokens
+    /// @param _spender  Address of account who spend ETH/tokens
+    /// @param _amount   Amount to convert
+    /// @param _currency Currency to convert
+    /// @dev             Internal function
     function convertation(
         address _spender,
         uint256 _amount,

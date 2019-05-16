@@ -5,7 +5,7 @@ import "./Validators.sol";
 /// @title  PoAGoverement contract implements gnosis multisignature implementation and validators mechanics
 /// @notice Based on Gnosis multisignature wallet, LGPL v3
 /// @dev    Allowing validators to post trasactions and execute them in agreee with other validators
-contract PoAGoverment is Validators {
+contract PoAGoverement is Validators {
     /// @notice                Happens when transaction confirmed by validator
     /// @param  _sender        Validator who confirmed transaction
     /// @param  _transactionId Id of transaction that confirmed by validator
@@ -105,9 +105,10 @@ contract PoAGoverment is Validators {
     /// @param _validators Array of validators
     constructor(
         address[] memory _validators,
-        address _target
+        address _target,
+        address _bankStorage
     )
-        Validators(_validators)
+        Validators(_validators, _bankStorage)
         public
     {
         require(_target != address(0));
