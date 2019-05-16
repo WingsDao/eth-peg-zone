@@ -15,6 +15,8 @@ contract BankStorage is Ownable, ReentrancyGuard {
     event ADDED_VALIDATOR(address indexed _validator);
     event REMOVED_ACTIVE_VALIDATOR(address indexed _validator);
 
+    event WITHDRAW_CURRENCY(address indexed _token, address indexed _recipient, uint256 _amount);
+
     address public goverement;
     address public ethTokenAddress;
 
@@ -82,14 +84,30 @@ contract BankStorage is Ownable, ReentrancyGuard {
         }
 
         currency.reminder = reminder;
-        currency.balance.add(_amount);
+        currency.balance = currency.balance.add(_amount);
 
         emit DEPOSIT_CURRENCY(_token, _amount, _fee);
     }
 
+    function withdraw(address _token, address payable _recipient, uint256 _amount, uint256 _gas) public onlyOwner() nonReentrant() {
+        require(isCurrency[_token]);
+
+        require(currencies[_token].balance <= _amount);
+        currencies[_token].balance = currencies[_token].balance.sub(_amount);
+
+        if (_token == ethTokenAddress) {
+            (bool success, ) = _recipient.call.value(_amount).gas(_gas)("");
+            require(success);
+        } else {
+            IERC20 token = IERC20(_token);
+            require(token.transfer(_recipient, _amount));
+        }
+
+        emit WITHDRAW_CURRENCY(_token, _recipient, _amount);
+    }
+
     function withdrawFee(address _token, uint256 _amount, uint256 _gas) public onlyValidator() nonReentrant() {
         require(isCurrency[_token]);
-        require(_gas > 0);
 
         require(allValidators[msg.sender].balances[_token] <= _amount);
 
