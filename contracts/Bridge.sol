@@ -7,9 +7,9 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
 import "./BankStorage.sol";
 
-/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token
+/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token. Owner should be goverement
 /// @notice Using fallback function to exchange ETH and 'exchange' function for tokens
-/// @dev    Should has some goverement contract as owner
+/// @dev    Should has some goverement contract as owner, 0x000... address reserved for ETH
 contract Bridge is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
@@ -131,6 +131,7 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@param  _ethMinAmount     Minimum amount of ETH exchange
     ///@param  _ethFeePercentage Percent fee of ETH exchange
     ///@param  _bankStorage      Address of bank storage contract
+    ///@dev                      Move bank storage owner to this contract after initialization
     constructor(
         uint256 _ethCapacity,
         uint256 _ethMinAmount,
@@ -178,7 +179,6 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@param  _recipient  Recipient, who will recieve currency
     ///@param  _amount     Amount to withdraw
     ///@param  _gas        Gas limit fallback function (in case recipient is contract)
-    ///@dev                   Could be executed only by owner (goverement)
     function withdraw(
         uint256 _currencyId,
         address payable _recipient,
@@ -212,7 +212,6 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@param  _minExchange   Minimum amount to exchange in case of this currency
     ///@param  _capacity      Maximum capacity of currency in this contract
     ///@param  _feePercentage Fee percentage that validators take for exchange
-    ///@dev                   Could be executed only by owner (goverement)
     ///@return                Return id of just added currency
     function addCurrency(
         address _tokenContract,
@@ -251,7 +250,6 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@notice              Change capacity for specific owner
     ///@param  _currencyId  Id of currency to change
     ///@param  _newCapacity New capacity for provided currency
-    ///@dev                 Could be executed only by owner (goverement)
     function changeCapacity(
         uint256 _currencyId,
         uint256 _newCapacity
@@ -270,7 +268,6 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@notice                Change minimum amount to exchange for specific currency
     ///@param _currencyId     Id of currency to change
     ///@param _newMinExchange New minimum amount of currency to exchange
-    ///@dev                   Could be executed only by owner (goverement)
     function changeMinExchange(
         uint256 _currencyId,
         uint256 _newMinExchange
@@ -289,7 +286,6 @@ contract Bridge is Ownable, ReentrancyGuard {
     ///@notice                   Change fee percentage for specific currency
     ///@param  _currencyId       Id of currency to change
     ///@param  _newFeePercentage New fee percentage for exchange provided currency
-    ///@dev                      Could be executed only by owner (goverement)
     function changeFee(
         uint256 _currencyId,
         uint256 _newFeePercentage
@@ -307,18 +303,19 @@ contract Bridge is Ownable, ReentrancyGuard {
     }
 
     ///@notice Pause contract, widthraw and exchange will be paused
-    ///@dev    Could be executed only by owner (goverement)
     function pause() public onlyOwner() {
         paused = true;
     }
 
     ///@notice Resume contract, indeed withdraw and exchange
-    ///@dev    Could be executed only by owner (goverement)
     function resume() public onlyOwner() {
         paused = false;
     }
 
-    ///@notice Get fee for specific currency and amount
+    ///@notice              Get fee for specific currency and amount
+    ///@param  _currencyId  Id of currency
+    ///@param  _amount      Amount of currency to calculate fee
+    ///@return             Fee amount
     function getFee(
         uint256 _currencyId,
         uint256 _amount
