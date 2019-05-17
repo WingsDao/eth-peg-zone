@@ -89,6 +89,9 @@ planned things to:
 * First refactoring
 * PoS government implementation instead of PoA
 
+You are ready to contribute, but please, try to follow
+solidity [style guide](https://solidity.readthedocs.io/en/v0.5.3/style-guide.html) and leave comments on new functional.
+
 ## License
 
 UNLICENSED.
