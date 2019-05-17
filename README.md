@@ -55,7 +55,7 @@ Current repository contains smart contracts part like:
 * [BankStorage.sol](/contracts/BankStorage.sol)  - Keeps ETH/tokens and split fees between
 validators
 
-## PoA multisignature logic**
+## PoA multisignature logic
 
 In PoA implementations we have list of validators, maximum is
 11 of them, minimum is 3. Each sensitive call
