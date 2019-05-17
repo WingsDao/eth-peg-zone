@@ -1,6 +1,7 @@
 pragma solidity ^0.5.8;
 
 import "./helpers/SelfExec.sol";
+import "./BankStorage.sol";
 
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state
@@ -30,6 +31,9 @@ contract Validators is SelfExec {
     /// @notice Array of all validators and their addressess
     address[] public validators;
 
+    /// @notice Bank storage
+    BankStorage public bankStorage;
+
     /// @notice            Check if validator already exists in smart contract
     /// @param  _validator Address of validator to check
     modifier validatorExists(address _validator) {
@@ -46,8 +50,16 @@ contract Validators is SelfExec {
 
     /// @notice             Initialize smart contract with validators array
     /// @param  _validators Initial validators array to initialize
-    constructor(address[] memory _validators) public {
+    constructor(
+        address[] memory _validators,
+        address _bankStorage
+    )
+        public
+    {
+        require(_bankStorage != address(0));
         require(_validators.length >= MIN_VALIDATORS);
+
+        bankStorage = BankStorage(_bankStorage);
 
         for (uint256 i = 0; i < _validators.length; i++) {
             addValidator(_validators[i]);
@@ -69,6 +81,8 @@ contract Validators is SelfExec {
 
         validators.push(_validator);
         isValidator[_validator] = true;
+
+        bankStorage.addValidator(address(uint160(_validator)));
 
         emit ADDED_VALIDATOR(_validator);
         return true;
@@ -102,6 +116,9 @@ contract Validators is SelfExec {
             }
         }
 
+        bankStorage.removeActiveValidator(address(uint160(_validator)));
+        bankStorage.addValidator(address(uint160(_newValidator)));
+
         emit REPLACED_VALIDATOR(_validator, _newValidator);
         return true;
     }
@@ -129,6 +146,8 @@ contract Validators is SelfExec {
         }
 
         validators.length -= 1;
+
+        bankStorage.removeActiveValidator(address(uint160(_validator)));
 
         emit REMOVED_VALIDATOR(_validator);
         return true;

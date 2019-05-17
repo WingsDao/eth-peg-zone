@@ -5,107 +5,113 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
-/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token
+import "./BankStorage.sol";
+
+/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token. Owner should be government
 /// @notice Using fallback function to exchange ETH and 'exchange' function for tokens
-/// @dev    Should has some goverement contract as owner
+/// @dev    Should has some government contract as owner, 0x000... address reserved for ETH
 contract Bridge is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
-    ///@notice                 Happens when new token listed
-    ///@param   _tokenContract Contract of token that listed
-    ///@param   _currencyId    Id of currency
+    /// @notice                 Happens when new token listed
+    /// @param   _tokenContract Contract of token that listed
+    /// @param   _currencyId    Id of currency
     event ADDED_CURRENCY(
         address indexed _tokenContract,
         uint256 _currencyId
     );
 
-    ///@notice Happens whenn capacity of currency changed
-    ///@param  _currencyId  Id of currency
-    ///@param _newCapacity New capacity of currency
+    /// @notice Happens whenn capacity of currency changed
+    /// @param  _currencyId  Id of currency
+    /// @param _newCapacity New capacity of currency
     event CHANGED_CAPACITY(
         uint256 indexed _currencyId,
         uint256 _newCapacity
     );
 
-    ///@notice                  Happens when minimum amount of exchange for currency changed
-    ///@param   _currencyId     Id of currency
-    ///@param   _newMinExchange New minimum amount of currency to exchange
+    /// @notice                  Happens when minimum amount of exchange for currency changed
+    /// @param   _currencyId     Id of currency
+    /// @param   _newMinExchange New minimum amount of currency to exchange
     event CHANGED_MIN_EXCHANGE(
         uint256 indexed _currencyId,
         uint256 _newMinExchange
     );
 
-    ///@notice                   Happens when fee for convertation changed for currency
-    ///@param  _currencyId       Id of currency
-    ///@param  _newFeePercentage New fee percentage
+    /// @notice                   Happens when fee for convertation changed for currency
+    /// @param  _currencyId       Id of currency
+    /// @param  _newFeePercentage New fee percentage
     event CHANGED_FEE(
         uint256 indexed _currencyId,
         uint256 _newFeePercentage
     );
 
-    ///@notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
-    ///@param  _currencyId Id of currency
-    ///@param  _spender    Address of account who convert currency
-    ///@param  _amount     Amount of currency that will be converted
+    /// @notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
+    /// @param  _currencyId Id of currency
+    /// @param  _spender    Address of account who convert currency
+    /// @param  _amount     Amount of currency that will be converted
     event CURRENCY_EXCHANGED(
         uint256 indexed _currencyId,
         address indexed _spender,
         uint256 _amount
     );
 
-    ///@notice             Happens when goverement withdraw currency for converter
-    ///@param  _currencyId Id of currency
-    ///@param  _recipient  Address of account who will get currency
-    ///@param  _amount     Amount of currency
+    /// @notice             Happens when government withdraw currency for converter
+    /// @param  _currencyId Id of currency
+    /// @param  _recipient  Address of account who will get currency
+    /// @param  _amount     Amount of currency
     event CURRENCY_WITHDRAW(
         uint256 indexed _currencyId,
         address indexed _recipient,
         uint256 _amount
     );
 
-    ///@notice Describing currency structure
+    /// @notice Describing currency structure
     struct Currency {
         address tokenContract;
         uint256 minExchange;
         uint256 capacity;
         uint256 feePercentage;
+        uint256 balance;
     }
 
-    ///@notice Maximum fee percentage that validators can set, e.g. s9999=99.99%
+    /// @notice Bank storage address
+    BankStorage public bankStorage;
+
+    /// @notice Maximum fee percentage that validators can set, e.g. 9999=99.99%
     uint256 constant public MAX_FEE = 9999;
 
-    ///@notice Detects is contract paused or not
+    /// @notice Detects is contract paused or not
     bool public paused;
 
-    ///@notice Total currencies counts
+    /// @notice Total currencies counts
     uint256 public currenciesCount;
 
-    ///@notice Reserved index for ETH currency
+    /// @notice Reserved index for ETH currency
     uint256 public ethIndex;
 
-    ///@notice All currencies list by index
+    /// @notice All currencies list by index
     mapping(uint256 => Currency) currencies;
 
-    ///@notice Token address to currency list
+    /// @notice Token address to currency list
     mapping(address => uint256) tokenToCurrency;
 
-    ///@notice Check if specific token address is currency
+    /// @notice Check if specific token address is currency
     mapping(address => bool) isCurrency;
 
-    ///@notice Should work only if contract is not paused
+    /// @notice Should work only if contract is not paused
     modifier whenNotPaused() {
         require(!paused);
         _;
     }
 
-    ///@notice Should work only if contract paused
+    /// @notice Should work only if contract paused
     modifier whenPaused() {
         require(paused);
         _;
     }
 
-    ///@notice             Check if currency exists by id of currency
-    ///@param  _currencyId Id of currency
+    /// @notice             Check if currency exists by id of currency
+    /// @param  _currencyId Id of currency
     modifier currencyExistsById(uint256 _currencyId) {
         if (_currencyId != ethIndex) {
             require(currencies[_currencyId].tokenContract != address(0));
@@ -113,25 +119,31 @@ contract Bridge is Ownable, ReentrancyGuard {
         _;
     }
 
-    ///@notice        Check if currency doesn't exist by address of currency token
-    ///@param  _token Address of token currency
+    /// @notice        Check if currency doesn't exist by address of currency token
+    /// @param  _token Address of token currency
     modifier currencyDoesntExist(address _token) {
         require(!isCurrency[_token]);
         _;
     }
 
-    ///@notice                   Constructor with basic parameters for ETH exchange
-    ///@param  _ethCapacity      Maximum capacity for ETH exchange
-    ///@param  _ethMinAmount     Minimum amount of ETH exchange
-    ///@param  _ethFeePercentage Percent fee of ETH exchange
+    /// @notice                   Constructor with basic parameters for ETH exchange
+    /// @param  _ethCapacity      Maximum capacity for ETH exchange
+    /// @param  _ethMinAmount     Minimum amount of ETH exchange
+    /// @param  _ethFeePercentage Percent fee of ETH exchange
+    /// @param  _bankStorage      Address of bank storage contract
+    /// @dev                      Move bank storage owner to this contract after initialization
     constructor(
         uint256 _ethCapacity,
         uint256 _ethMinAmount,
-        uint256 _ethFeePercentage
+        uint256 _ethFeePercentage,
+        address _bankStorage
     )
         public
-        Ownable()
     {
+        require(_bankStorage != address(0));
+
+        bankStorage = BankStorage(_bankStorage);
+
         ethIndex = addCurrency(
             address(0),
             _ethCapacity,
@@ -140,15 +152,15 @@ contract Bridge is Ownable, ReentrancyGuard {
         );
     }
 
-    ///@notice Payable function for ETH convertation
+    /// @notice Payable function for ETH convertation
     function () payable external {
         exchange(ethIndex, msg.value);
     }
 
-    ///@notice             Exchanges ETH or any token
-    ///@param  _currencyId Id of currency to exchange
-    ///@param  _amount     Amount of currency to exchange
-    ///@dev                Works only if contract not paused
+    /// @notice             Exchanges ETH or any token
+    /// @param  _currencyId Id of currency to exchange
+    /// @param  _amount     Amount of currency to exchange
+    /// @dev                Works only if contract not paused
     function exchange(
         uint256 _currencyId,
         uint256 _amount
@@ -158,16 +170,15 @@ contract Bridge is Ownable, ReentrancyGuard {
         whenNotPaused()
         currencyExistsById(_currencyId)
     {
-        Currency memory currency = currencies[_currencyId];
+        Currency storage currency = currencies[_currencyId];
         convertation(msg.sender, _amount, currency);
     }
 
-    ///@notice             Withdraw currency to recipient, could be called by owner only (goverement)
-    ///@param  _currencyId Id of currency
-    ///@param  _recipient  Recipient, who will recieve currency
-    ///@param  _amount     Amount to withdraw
-    ///@param  _gas        Gas limit fallback function (in case recipient is contract)
-    ///@dev                   Could be executed only by owner (goverement)
+    /// @notice             Withdraw currency to recipient, could be called by owner only (government)
+    /// @param  _currencyId Id of currency
+    /// @param  _recipient  Recipient, who will recieve currency
+    /// @param  _amount     Amount to withdraw
+    /// @param  _gas        Gas limit fallback function (in case recipient is contract)
     function withdraw(
         uint256 _currencyId,
         address payable _recipient,
@@ -180,31 +191,28 @@ contract Bridge is Ownable, ReentrancyGuard {
         nonReentrant()
         currencyExistsById(_currencyId)
     {
-        require(_gas > 0);
-        Currency memory currency = currencies[_currencyId];
+        Currency storage currency = currencies[_currencyId];
 
         require(_amount >= currency.minExchange);
+        currency.balance = currency.balance.sub(_amount);
 
-        if (_currencyId == ethIndex) {
-            (bool success,) = _recipient.call.value(_amount).gas(_gas)("");
-            require(success);
-
-            emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
-        } else {
-            IERC20 token = IERC20(currency.tokenContract);
-            require(token.transfer(_recipient, _amount));
-
-            emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
-        }
+        bankStorage.withdraw(currency.tokenContract, _recipient, _amount, _gas);
+        emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
     }
 
-    ///@notice                Add currency to currecies list
-    ///@param  _tokenContract Contract of token
-    ///@param  _minExchange   Minimum amount to exchange in case of this currency
-    ///@param  _capacity      Maximum capacity of currency in this contract
-    ///@param  _feePercentage Fee percentage that validators take for exchange
-    ///@dev                   Could be executed only by owner (goverement)
-    ///@return                Return id of just added currency
+    /// @notice           We migrate bank storage to new owner
+    /// @param  _newOwner Address of new owner for bank storage
+    /// @dev              This is very basic migration, allowing to change owner of bank storage
+    function migration(address _newOwner) public onlyOwner() {
+        bankStorage.transferOwnership(_newOwner);
+    }
+
+    /// @notice                Add currency to currecies list
+    /// @param  _tokenContract Contract of token
+    /// @param  _minExchange   Minimum amount to exchange in case of this currency
+    /// @param  _capacity      Maximum capacity of currency in this contract
+    /// @param  _feePercentage Fee percentage that validators take for exchange
+    /// @return                Return id of just added currency
     function addCurrency(
         address _tokenContract,
         uint256 _minExchange,
@@ -227,7 +235,8 @@ contract Bridge is Ownable, ReentrancyGuard {
             tokenContract: _tokenContract,
             minExchange:   _minExchange,
             capacity:      _capacity,
-            feePercentage: _feePercentage
+            feePercentage: _feePercentage,
+            balance:       0
         });
 
         tokenToCurrency[_tokenContract] = currenciesCount;
@@ -238,10 +247,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         return currenciesCount;
     }
 
-    ///@notice              Change capacity for specific owner
-    ///@param  _currencyId  Id of currency to change
-    ///@param  _newCapacity New capacity for provided currency
-    ///@dev                 Could be executed only by owner (goverement)
+    /// @notice              Change capacity for specific owner
+    /// @param  _currencyId  Id of currency to change
+    /// @param  _newCapacity New capacity for provided currency
     function changeCapacity(
         uint256 _currencyId,
         uint256 _newCapacity
@@ -257,10 +265,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_CAPACITY(_currencyId, _newCapacity);
     }
 
-    ///@notice                Change minimum amount to exchange for specific currency
-    ///@param _currencyId     Id of currency to change
-    ///@param _newMinExchange New minimum amount of currency to exchange
-    ///@dev                   Could be executed only by owner (goverement)
+    /// @notice                Change minimum amount to exchange for specific currency
+    /// @param _currencyId     Id of currency to change
+    /// @param _newMinExchange New minimum amount of currency to exchange
     function changeMinExchange(
         uint256 _currencyId,
         uint256 _newMinExchange
@@ -276,10 +283,9 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_MIN_EXCHANGE(_currencyId, _newMinExchange);
     }
 
-    ///@notice                   Change fee percentage for specific currency
-    ///@param  _currencyId       Id of currency to change
-    ///@param  _newFeePercentage New fee percentage for exchange provided currency
-    ///@dev                      Could be executed only by owner (goverement)
+    /// @notice                   Change fee percentage for specific currency
+    /// @param  _currencyId       Id of currency to change
+    /// @param  _newFeePercentage New fee percentage for exchange provided currency
     function changeFee(
         uint256 _currencyId,
         uint256 _newFeePercentage
@@ -296,44 +302,94 @@ contract Bridge is Ownable, ReentrancyGuard {
         emit CHANGED_FEE(_currencyId, _newFeePercentage);
     }
 
-    ///@notice Pause contract, widthraw and exchange will be paused
-    ///@dev    Could be executed only by owner (goverement)
+    /// @notice Pause contract, widthraw and exchange will be paused
     function pause() public onlyOwner() {
         paused = true;
     }
 
-    ///@notice Resume contract, indeed withdraw and exchange
-    ///@dev    Could be executed only by owner (goverement)
+    /// @notice Resume contract, indeed withdraw and exchange
     function resume() public onlyOwner() {
         paused = false;
     }
 
-    ///@notice          Convertation function for ETH and tokens
-    ///@param _spender  Address of account who spend ETH/tokens
-    ///@param _amount   Amount to convert
-    ///@param _currency Currency to convert
-    ///@dev             Internal function
+    /// @notice              Get fee for specific currency and amount
+    /// @param  _currencyId  Id of currency
+    /// @param  _amount      Amount of currency to calculate fee
+    /// @return             Fee amount
+    function getFee(
+        uint256 _currencyId,
+        uint256 _amount
+    )
+        public
+        view
+        returns (uint256)
+    {
+        uint256 feePercentage = currencies[_currencyId].feePercentage;
+        return _amount * feePercentage / (MAX_FEE+1);
+    }
+
+    /// @notice Returns ETH fake token address (e.g. 0x0000...), just for compatibility
+    /// @return ETH token address
+    function getEthTokenAddress()
+        public
+        view
+        returns (address)
+    {
+        return currencies[ethIndex].tokenContract;
+    }
+
+    /// @notice          Convertation function for ETH and tokens
+    /// @param _spender  Address of account who spend ETH/tokens
+    /// @param _amount   Amount to convert
+    /// @param _currency Currency to convert
+    /// @dev             Internal function
     function convertation(
         address _spender,
         uint256 _amount,
-        Currency memory _currency
+        Currency storage _currency
     )
         internal
     {
         require(_amount >= _currency.minExchange);
         uint256 currencyId = tokenToCurrency[_currency.tokenContract];
 
+        uint256 fee = getFee(currencyId, _amount);
+        uint256 realValue = _amount.sub(fee);
+
+        require(_currency.balance.add(realValue) <= _currency.capacity);
+        _currency.balance = _currency.balance.add(realValue);
+
         if (currencyId == ethIndex) {
             require(msg.value == _amount);
-            require(address(this).balance.add(_amount) <= _currency.capacity);
+
+            (bool success, ) = address(bankStorage)
+                .call
+                .value(_amount)
+                .gas(120000)(
+                    abi.encodeWithSignature(
+                        "deposit(address,uint256,uint256)",
+                        _currency.tokenContract,
+                        realValue,
+                        fee
+                    )
+                );
+
+
+            require(success);
 
             emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         } else {
             IERC20 token = IERC20(_currency.tokenContract);
 
-            require(token.balanceOf(address(this)).add(_amount) <= _currency.capacity);
             require(token.allowance(_spender, address(this)) >= _amount);
             require(token.transferFrom(_spender, address(this), _amount));
+            require(token.approve(address(bankStorage), _amount));
+
+            bankStorage.deposit(
+                _currency.tokenContract,
+                realValue,
+                fee
+            );
 
             emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         }

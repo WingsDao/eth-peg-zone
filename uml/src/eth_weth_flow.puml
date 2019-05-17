@@ -1,0 +1,57 @@
+@startuml
+
+skinparam defaultFontName Arial
+skinparam roundcorner 15
+
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+title  __Simple__ convert\n ETH to WETH
+footer Wings Peg Zone Implementation
+
+actor Alice
+
+box "Smart Contracts"
+participant "BankStorage" as Storage
+participant "Bridge" as Bridge
+end box
+
+box "Relay Layer"
+participant "Validators Nodes" as Relay
+end box
+
+participant "Wings Blockchain" as Blockchain
+
+Alice   -> Bridge: Deposit ETH
+note left
+    Deposit ETH to
+    convert to WETH
+end note
+
+activate Bridge
+Bridge  -> Storage: Store ETH
+Bridge -> Bridge:   Emit deposit events
+note left
+    Store ETH in
+    storage contract
+    until withdraw
+end note
+
+Relay <-> Bridge: Receive event,\n wait for N confirmations
+deactivate Bridge
+
+activate   Relay
+...N confirmations later...
+Relay   -> Blockchain: Issue WETH on Alice address\n inside Wings Blockchain
+note left
+    Relay layer consists
+    of validators nodes
+    that connect to both blockchains,
+    listen to events,
+    issue/withdraw currencies
+    on both chains by their consensus
+end note
+
+Blockchain -> Alice: Alice got WETH\n on Wings blockchain
+deactivate Relay
+@enduml
