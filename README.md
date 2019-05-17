@@ -77,6 +77,10 @@ To get accrued fees validator should make a call to BankStorage contract with am
 
     TODO
 
+## Docs
+
+    TODO
+
 ## Contribution
 
 Current project is still under development and going to evolve together with other parts of Wings blockchain as
