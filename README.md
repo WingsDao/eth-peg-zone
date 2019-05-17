@@ -5,7 +5,7 @@
 Allowing to move ETH/ERC20 tokens between Ethereum
 blockchain and WINGS blockchain.
 
-Right now security is reached by PoA validators, that inspected by community, later it should be replaced with Proof of Stake algorithm to
+Right now security is reached by PoA validators, that inspected by community, later it should be replaced with Proof of Stake (PoS) algorithm to
 reach more decentralization.
 
 This is work in progress, but still general functional already implemented, like:
@@ -34,23 +34,23 @@ solutions for popular blockchains, not only for Ethereum, like: Bitcoin, EOS, Tr
 This repository contains only smart contract part, it doesnt include relay node part, and Cosmos part (module for Cosmos SDK), described initiatives will be announced later.
 
 For easy explanation let's make a small glossary:
-* Currency  - Any ETH/ERC20 token
-* Validator - Validator account involved in PoA consensus
-* Peggy     - Peg zone allowing to move tokens between chains
-* Consensus - When any action requires validators N/2+1 approve, where N is total amount of PoA validators
-* WETH      - Example currency, 1:1 to ETH, but exists on Wings blockchain
+* `Currency`  - Any ETH/ERC20 token
+* `Validator` - Validator account involved in PoA consensus
+* `Peggy`     - Peg zone allowing to move tokens between chains
+* `Consensus` - When any action requires validators N/2+1 approve, where N is total amount of PoA validators
+* `WETH`      - Example currency, 1:1 to ETH, but exists on Wings blockchain
 
 So let's look at **ETH to WETH UML** as example
 
-**ETH to WETH**
+![ETH to WETH][/uml/images/eth_wei_flow.png]
 
 WETH to ETH conversion going to work in same way, but lock will start at Wings blockchain, and withdraw will happen at Ethereum blockchain.
 
 Current repository contains smart contracts part like:
 
-* PoAGoverment - Implements validators logic and PoA consensus logic on actions during peg zone life cycle
-* Bridge       - Implements bridge for lock/withdraw Ethereum and any listed ERC20 token, when user want to move his ETH/tokens to Wings blockchain
-* BankStorage  - Keeps ETH/tokens and split fees between
+* `PoAGoverment.sol` - Implements validators logic and PoA consensus logic on actions during peg zone life cycle
+* `Bridge.sol`       - Implements bridge for lock/withdraw Ethereum and any listed ERC20 token, when user want to move his ETH/tokens to Wings blockchain
+* `BankStorage.sol`  - Keeps ETH/tokens and split fees between
 validators
 
 **PoA multisignature logic**
