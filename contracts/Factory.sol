@@ -1,18 +1,18 @@
 pragma solidity ^0.5.8;
 
-import "./PoAGoverement.sol";
+import "./PoAGovernment.sol";
 import "./BankStorage.sol";
 import "./Bridge.sol";
 
 /// @title Factory to create new bridge with PoAGoverment
 contract Factory {
-    /// @notice             Happens when new instance of storage, goverement and bridge created
+    /// @notice             Happens when new instance of storage, government and bridge created
     /// @param  _bridge     Address of created Bridge contract
-    /// @param  _goverement Address of created PoAGoverment contract
+    /// @param  _government Address of created PoAGoverment contract
     /// @param  _storage    Address of created storage contract
     event NEW_INSTANCE(
         address _bridge,
-        address _goverement,
+        address _government,
         address _storage
     );
 
@@ -37,17 +37,17 @@ contract Factory {
             address(store)
         );
 
-        PoAGoverement goverement = new PoAGoverement(
+        PoAGovernment government = new PoAGovernment(
             _validators,
             address(bridge),
             address(store)
         );
 
-        store.setup(address(goverement), bridge.getEthTokenAddress());
+        store.setup(address(government), bridge.getEthTokenAddress());
         store.transferOwnership(address(bridge));
 
-        bridge.transferOwnership(address(goverement));
+        bridge.transferOwnership(address(government));
 
-        emit NEW_INSTANCE(address(bridge), address(goverement), address(store));
+        emit NEW_INSTANCE(address(bridge), address(government), address(store));
     }
 }

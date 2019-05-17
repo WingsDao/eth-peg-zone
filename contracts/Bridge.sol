@@ -7,9 +7,9 @@ import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
 import "./BankStorage.sol";
 
-/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token. Owner should be goverement
+/// @title  Bridge contract allowing to exchange ETH and any listed ERC20 token. Owner should be government
 /// @notice Using fallback function to exchange ETH and 'exchange' function for tokens
-/// @dev    Should has some goverement contract as owner, 0x000... address reserved for ETH
+/// @dev    Should has some government contract as owner, 0x000... address reserved for ETH
 contract Bridge is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
@@ -55,7 +55,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         uint256 _amount
     );
 
-    /// @notice             Happens when goverement withdraw currency for converter
+    /// @notice             Happens when government withdraw currency for converter
     /// @param  _currencyId Id of currency
     /// @param  _recipient  Address of account who will get currency
     /// @param  _amount     Amount of currency
@@ -174,7 +174,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         convertation(msg.sender, _amount, currency);
     }
 
-    /// @notice             Withdraw currency to recipient, could be called by owner only (goverement)
+    /// @notice             Withdraw currency to recipient, could be called by owner only (government)
     /// @param  _currencyId Id of currency
     /// @param  _recipient  Recipient, who will recieve currency
     /// @param  _amount     Amount to withdraw

@@ -2,10 +2,10 @@ pragma solidity ^0.5.8;
 
 import "./Validators.sol";
 
-/// @title  PoAGoverement contract implements gnosis multisignature implementation and validators mechanics
+/// @title  PoAGovernment contract implements gnosis multisignature implementation and validators mechanics
 /// @notice Based on Gnosis multisignature wallet, LGPL v3
 /// @dev    Allowing validators to post trasactions and execute them in agreee with other validators
-contract PoAGoverement is Validators {
+contract PoAGovernment is Validators {
     /// @notice                Happens when transaction confirmed by validator
     /// @param  _sender        Validator who confirmed transaction
     /// @param  _transactionId Id of transaction that confirmed by validator

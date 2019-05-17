@@ -50,16 +50,16 @@ contract BankStorage is Ownable, ReentrancyGuard {
         uint256 _amount
     );
 
-    /// @notice                Happens when goverement contract changes
-    /// @param  _oldGoverement Old goverement contract
-    /// @param  _newGoverement New goverement contracts
-    event GOVEREMENT_CHANGED(
-        address _oldGoverement,
-        address _newGoverement
+    /// @notice                Happens when government contract changes
+    /// @param  _oldGovernment Old government contract
+    /// @param  _newGovernment New government contracts
+    event GOVERNMENT_CHANGED(
+        address _oldGovernment,
+        address _newGovernment
     );
 
-    /// @notice Goverement contract address
-    address public goverement;
+    /// @notice government contract address
+    address public government;
 
     /// @notice ETH token reserved address (just for compatibility)
     address public ethTokenAddress;
@@ -98,13 +98,13 @@ contract BankStorage is Ownable, ReentrancyGuard {
     }
 
     /// @notice Allows only goveremet to call function
-    modifier onlyGoverement() {
-        require(goverement == msg.sender);
+    modifier onlyGovernment() {
+        require(government == msg.sender);
         _;
     }
 
     modifier isReady() {
-        require(goverement != address(0));
+        require(government != address(0));
         require(ethTokenAddress != address(0));
         _;
     }
@@ -112,22 +112,22 @@ contract BankStorage is Ownable, ReentrancyGuard {
     /// @notice Constructor
     constructor() public { }
 
-    /// @notice                  Initializing goverement contract and ETH token address (for compatibility)
-    /// @param  _goverement      Goverement address
+    /// @notice                  Initializing government contract and ETH token address (for compatibility)
+    /// @param  _government      Government address
     /// @param  _ethTokenAddress ETH token address (for compatibility)
     function setup(
-        address _goverement,
+        address _government,
         address _ethTokenAddress
     )
         public
         onlyOwner()
     {
-        require(goverement == address(0));
+        require(government == address(0));
         require(ethTokenAddress == address(0));
-        require(_goverement != address(0));
+        require(_government != address(0));
         require(_ethTokenAddress != address(0));
 
-        goverement = _goverement;
+        government = _government;
         ethTokenAddress = _ethTokenAddress;
 
         addCurrency(_ethTokenAddress);
@@ -253,7 +253,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
     )
         public
         isReady()
-        onlyGoverement()
+        onlyGovernment()
     {
         require(!isValidator[_validator]);
 
@@ -273,7 +273,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
     )
         public
         isReady()
-        onlyGoverement()
+        onlyGovernment()
     {
         require(isValidator[_validator]);
 
@@ -289,17 +289,17 @@ contract BankStorage is Ownable, ReentrancyGuard {
         emit REMOVED_ACTIVE_VALIDATOR(_validator);
     }
 
-    /// @notice                Change goverement contract
-    /// @param  _newGoverement Address of new goverment contract
-    function transferGoverement(
-        address _newGoverement
+    /// @notice                Change government contract
+    /// @param  _newGovernment Address of new goverment contract
+    function transferGovernment(
+        address _newGovernment
     )
         public
         isReady()
-        onlyGoverement()
+        onlyGovernment()
     {
-        goverement = _newGoverement;
-        emit GOVEREMENT_CHANGED(goverement, _newGoverement);
+        government = _newGovernment;
+        emit GOVERNMENT_CHANGED(government, _newGovernment);
     }
 
     /// @notice        Adding new raw currency to currencies list

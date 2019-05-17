@@ -50,7 +50,7 @@ WETH to ETH conversion going to work in same way, but lock will start at Wings b
 
 Current repository contains smart contracts part like:
 
-* [PoAGoverment.sol](/contracts/PoAGoverement.sol) - Implements validators logic and PoA consensus logic on actions during peg zone life cycle
+* [PoAGoverment.sol](/contracts/PoAGovernment.sol) - Implements validators logic and PoA consensus logic on actions during peg zone life cycle
 * [Bridge.sol](/contracts/Bridge.sol)      - Implements bridge for lock/withdraw Ethereum and any listed ERC20 token, when user want to move his ETH/tokens to Wings blockchain
 * [BankStorage.sol](/contracts/BankStorage.sol)  - Keeps ETH/tokens and split fees between
 validators
