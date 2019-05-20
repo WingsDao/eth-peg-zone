@@ -1,9 +1,5 @@
 # Peg Zone Smart Contracts
 
-<p align="center">
-  <img width="320" height="240" src="/res/logo.png?raw=true">
-</p>
-
 **WINGS peg zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
 
 Allowing to move ETH/ERC20 tokens between Ethereum
