@@ -1,4 +1,8 @@
-# Peggy Zone Smart Contracts
+# Peg Zone Smart Contracts
+
+<p align="center">
+  <img width="320" height="240" src="/res/logo.png?raw=true">
+</p>
 
 **WINGS peg zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
 
@@ -44,7 +48,7 @@ For easy explanation let's make a small glossary:
 
 So let's look at **ETH to WETH UML** as example
 
-![Wings to WETH UML](/uml/images/eth_wei_flow.png?raw=true "Wings to WETH UML")
+![Wings to WETH UML](/res/eth_wei_flow.png?raw=true "Wings to WETH UML")
 
 WETH to ETH conversion going to work in same way, but lock will start at Wings blockchain, and withdraw will happen at Ethereum blockchain.
 
