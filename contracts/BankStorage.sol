@@ -5,8 +5,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 
-///@title Stores ETH and tokens, pays fees to validators, like low level storage
-///@dev   Bridge should be owner of contract
+/// @title Stores ETH and tokens, pays fees to validators, like low level storage
+/// @dev   Bridge should be owner of contract
 contract BankStorage is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
 
@@ -93,24 +93,18 @@ contract BankStorage is Ownable, ReentrancyGuard {
 
     /// @notice Allows only validator to call function
     modifier onlyValidator() {
-        require(isValidator[msg.sender]);
+        require(isValidator[msg.sender], "Isnt validator");
         _;
     }
 
     /// @notice Allows only goveremet to call function
     modifier onlyGovernment() {
-        require(government == msg.sender);
+        require(government == msg.sender, "Isnt government");
         _;
     }
 
-    modifier isReady() {
-        require(government != address(0));
-        require(ethTokenAddress != address(0));
-        _;
-    }
-
-    /// @notice Constructor
-    constructor() public { }
+    ///@notice Empty constructor function
+    constructor() public {}
 
     /// @notice                  Initializing government contract and ETH token address (for compatibility)
     /// @param  _government      Government address
@@ -122,10 +116,8 @@ contract BankStorage is Ownable, ReentrancyGuard {
         public
         onlyOwner()
     {
-        require(government == address(0));
-        require(ethTokenAddress == address(0));
-        require(_government != address(0));
-        require(_ethTokenAddress != address(0));
+        require(government  == address(0), "Government address isnt zero");
+        require(_government != address(0), "New government address is zero");
 
         government = _government;
         ethTokenAddress = _ethTokenAddress;
@@ -147,7 +139,6 @@ contract BankStorage is Ownable, ReentrancyGuard {
         payable
         public
         onlyOwner()
-        isReady()
     {
         if (!isCurrency[_token]) {
             addCurrency(_token);
@@ -157,11 +148,20 @@ contract BankStorage is Ownable, ReentrancyGuard {
         uint256 totalAmount = _amount.add(_fee);
 
         if (_token == ethTokenAddress) {
-            require(totalAmount == msg.value);
+            require(
+                totalAmount == msg.value,
+                "Total amount is not equal transaction value"
+            );
         } else {
             IERC20 token = IERC20(_token);
-            require(token.allowance(msg.sender, address(this)) == totalAmount);
-            require(token.transferFrom(msg.sender, address(this), totalAmount));
+            require(
+                token.allowance(msg.sender, address(this)) == totalAmount,
+                "Token allowed amount is not equal to amount to recieve"
+            );
+            require(
+                token.transferFrom(msg.sender, address(this), totalAmount),
+                "Cant transfer tokens from contract"
+            );
         }
 
         uint256 amountToSplit = _fee.add(currency.reminder);
@@ -194,20 +194,24 @@ contract BankStorage is Ownable, ReentrancyGuard {
     )
         public
         onlyOwner()
-        isReady()
         nonReentrant()
     {
-        require(isCurrency[_token]);
-
-        require(currencies[_token].balance <= _amount);
+        require(isCurrency[_token], "Wrong token address to withdraw");
+        require(
+            currencies[_token].balance <= _amount,
+            "Balance is less then amount to withdraw"
+        );
         currencies[_token].balance = currencies[_token].balance.sub(_amount);
 
         if (_token == ethTokenAddress) {
             (bool success, ) = _recipient.call.value(_amount).gas(_gas)("");
-            require(success);
+            require(success, "ETH transfer isnt successful");
         } else {
             IERC20 token = IERC20(_token);
-            require(token.transfer(_recipient, _amount));
+            require(
+                token.transfer(_recipient, _amount),
+                "Token transfer isnt successful"
+            );
         }
 
         emit WITHDRAW_RAW_CURRENCY(_token, _recipient, _amount);
@@ -223,21 +227,26 @@ contract BankStorage is Ownable, ReentrancyGuard {
         uint256 _gas
     )
         public
-        isReady()
         onlyValidator()
         nonReentrant()
     {
-        require(isCurrency[_token]);
+        require(isCurrency[_token], "Wrong token address to withdraw fee");
 
-        require(allValidators[msg.sender].balances[_token] <= _amount);
+        require(
+            allValidators[msg.sender].balances[_token] <= _amount,
+            "Not enought fee balance to withdraw"
+        );
 
         if (_token == ethTokenAddress) {
             (bool success,) = allValidators[msg.sender].account.call.value(_amount).gas(_gas)("");
-            require(success);
+            require(success, "ETH transfer is not successful");
         } else {
             IERC20 token = IERC20(_token);
 
-            require(token.transfer(msg.sender, _amount));
+            require(
+                token.transfer(msg.sender, _amount),
+                "Token transfer is not successful"
+            );
         }
 
         allValidators[msg.sender].balances[_token] =
@@ -252,10 +261,9 @@ contract BankStorage is Ownable, ReentrancyGuard {
         address payable _validator
     )
         public
-        isReady()
         onlyGovernment()
     {
-        require(!isValidator[_validator]);
+        require(!isValidator[_validator], "Address is validator already");
 
         activeValidators.push(_validator);
         allValidators[_validator] = Validator({
@@ -272,10 +280,9 @@ contract BankStorage is Ownable, ReentrancyGuard {
         address _validator
     )
         public
-        isReady()
         onlyGovernment()
     {
-        require(isValidator[_validator]);
+        require(isValidator[_validator], "Address is not a validator");
 
         for (uint256 i = 0; i < activeValidators.length; i++) {
             if (activeValidators[i] == _validator) {
@@ -295,7 +302,6 @@ contract BankStorage is Ownable, ReentrancyGuard {
         address _newGovernment
     )
         public
-        isReady()
         onlyGovernment()
     {
         government = _newGovernment;
