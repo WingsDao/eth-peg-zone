@@ -100,13 +100,13 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice Should work only if contract is not paused
     modifier whenNotPaused() {
-        require(!paused);
+        require(!paused, "Contract isnt paused");
         _;
     }
 
     /// @notice Should work only if contract paused
     modifier whenPaused() {
-        require(paused);
+        require(paused, "Contract is paused");
         _;
     }
 
@@ -114,7 +114,10 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @param  _currencyId Id of currency
     modifier currencyExistsById(uint256 _currencyId) {
         if (_currencyId != ethIndex) {
-            require(currencies[_currencyId].tokenContract != address(0));
+            require(
+                currencies[_currencyId].tokenContract != address(0),
+                "Currency doesnt exist if check by id"
+            );
         }
         _;
     }
@@ -122,7 +125,10 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice        Check if currency doesn't exist by address of currency token
     /// @param  _token Address of token currency
     modifier currencyDoesntExist(address _token) {
-        require(!isCurrency[_token]);
+        require(
+            !isCurrency[_token],
+            "Currency doesnt exist"
+        );
         _;
     }
 
@@ -140,7 +146,7 @@ contract Bridge is Ownable, ReentrancyGuard {
     )
         public
     {
-        require(_bankStorage != address(0));
+        require(_bankStorage != address(0), "Empty bank storage");
 
         bankStorage = BankStorage(_bankStorage);
 
@@ -193,7 +199,7 @@ contract Bridge is Ownable, ReentrancyGuard {
     {
         Currency storage currency = currencies[_currencyId];
 
-        require(_amount >= currency.minExchange);
+        require(_amount >= currency.minExchange, "Amount should be great or equal then min exchange");
         currency.balance = currency.balance.sub(_amount);
 
         bankStorage.withdraw(currency.tokenContract, _recipient, _amount, _gas);
@@ -215,8 +221,8 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @return                Return id of just added currency
     function addCurrency(
         address _tokenContract,
-        uint256 _minExchange,
         uint256 _capacity,
+        uint256 _minExchange,
         uint256 _feePercentage
     )
         public
@@ -224,12 +230,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         currencyDoesntExist(_tokenContract)
         returns (uint256)
     {
-        require(_minExchange > 0);
-        require(_capacity  > 0);
-        require(_capacity  >= _minExchange);
-        require(_feePercentage > 0);
-        require(_feePercentage < MAX_FEE);
-        require(tokenToCurrency[_tokenContract] == 0);
+        require(_minExchange > 0, "Min exchange equal 0");
+        require(_capacity  > 0, "Capacity equal 0");
+        require(_capacity  >= _minExchange, "Min exchange great or equal then capacity");
+        require(_feePercentage > 0, "Fee equal 0");
+        require(_feePercentage < MAX_FEE, "Fee great then max fee");
 
         currencies[currenciesCount] = Currency({
             tokenContract: _tokenContract,
@@ -258,8 +263,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         onlyOwner()
         currencyExistsById(_currencyId)
     {
-        require(_newCapacity > 0);
-        require(_newCapacity >= currencies[_currencyId].minExchange);
+        require(_newCapacity > 0, "New capacity should be great then 0");
+        require(
+            _newCapacity >= currencies[_currencyId].minExchange,
+            "New capacity should be great or equal then min exchange"
+        );
 
         currencies[_currencyId].capacity = _newCapacity;
         emit CHANGED_CAPACITY(_currencyId, _newCapacity);
@@ -276,8 +284,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         onlyOwner()
         currencyExistsById(_currencyId)
     {
-        require(_newMinExchange > 0);
-        require(_newMinExchange <= currencies[_currencyId].capacity);
+        require(_newMinExchange > 0, "Min exchange should be great then 0");
+        require(
+            _newMinExchange <= currencies[_currencyId].capacity,
+            "Min exchange should be less or equal then capacity"
+        );
 
         currencies[_currencyId].minExchange = _newMinExchange;
         emit CHANGED_MIN_EXCHANGE(_currencyId, _newMinExchange);
@@ -294,8 +305,11 @@ contract Bridge is Ownable, ReentrancyGuard {
         onlyOwner()
         currencyExistsById(_currencyId)
     {
-        require(_newFeePercentage > 0);
-        require(_newFeePercentage < MAX_FEE);
+        require(_newFeePercentage > 0, "Fee percentage should be great then 0");
+        require(
+            _newFeePercentage < MAX_FEE,
+            "Fee percentage should be less then max fee"
+        );
 
         currencies[_currencyId].feePercentage = _newFeePercentage;
 
@@ -350,17 +364,25 @@ contract Bridge is Ownable, ReentrancyGuard {
     )
         internal
     {
-        require(_amount >= _currency.minExchange);
+        require(
+            _amount >= _currency.minExchange,
+            "Amount should be great or equal then min exchage"
+        );
+
         uint256 currencyId = tokenToCurrency[_currency.tokenContract];
 
         uint256 fee = getFee(currencyId, _amount);
         uint256 realValue = _amount.sub(fee);
 
-        require(_currency.balance.add(realValue) <= _currency.capacity);
+        require(
+            _currency.balance.add(realValue) <= _currency.capacity,
+            "Cant convert ETH/tokens because of capacity"
+        );
+
         _currency.balance = _currency.balance.add(realValue);
 
         if (currencyId == ethIndex) {
-            require(msg.value == _amount);
+            require(msg.value == _amount, "Amount not equal to ETH value");
 
             (bool success, ) = address(bankStorage)
                 .call
@@ -375,15 +397,25 @@ contract Bridge is Ownable, ReentrancyGuard {
                 );
 
 
-            require(success);
+            require(success, "ETH transfer is not successful");
 
             emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         } else {
             IERC20 token = IERC20(_currency.tokenContract);
 
-            require(token.allowance(_spender, address(this)) >= _amount);
-            require(token.transferFrom(_spender, address(this), _amount));
-            require(token.approve(address(bankStorage), _amount));
+            require(
+                token.allowance(_spender, address(this)) >= _amount,
+                "Token allowed amount is not equal to expected amount"
+            );
+            require(
+                token.transferFrom(_spender, address(this), _amount),
+                "Token transfer is not successful"
+            );
+
+            require(
+                token.approve(address(bankStorage), _amount),
+                "Cant approve approve transfer of tokens for BankStorage"
+            );
 
             bankStorage.deposit(
                 _currency.tokenContract,
