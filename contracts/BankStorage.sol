@@ -130,7 +130,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
     /// @param _amount Amount of currency to store on contract
     /// @param _fee    Amount of fee for split between validators
     /// @dev           Split fee between validators, if reminder gt 0,
-    ///               keep for next time, amount recieved by function should be equal _fee+_amount
+    ///                keep for next time, amount recieved by function should be equal _fee+_amount
     function deposit(
         address _token,
         uint256 _amount,
@@ -182,10 +182,11 @@ contract BankStorage is Ownable, ReentrancyGuard {
         emit DEPOSIT_RAW_CURRENCY(_token, _amount, _fee);
     }
 
-    /// @notice         Withdraw tokens/ETH to recipient
-    /// @param  _token  Address of token
-    /// @param  _amount Amount of currency to send to recipient
-    /// @param  _gas    Gas limit fallback function (in case recipient is contract)
+    /// @notice            Withdraw tokens/ETH to recipient
+    /// @param  _token     Address of token
+    /// @param  _recipient Recipient address
+    /// @param  _amount    Amount of currency to send to recipient
+    /// @param  _gas       Gas limit fallback function (in case recipient is contract)
     function withdraw(
         address _token,
         address payable _recipient,
@@ -217,10 +218,10 @@ contract BankStorage is Ownable, ReentrancyGuard {
         emit WITHDRAW_RAW_CURRENCY(_token, _recipient, _amount);
     }
 
-    /// @notice        Withdraw fee by validator
-    /// @param _token  Token address
-    /// @param _amount Amount of currency to withdraw
-    /// @param _gas    Gas limit fallback function (in case recipient is contract)
+    /// @notice         Withdraw fee by validator
+    /// @param  _token  Token address
+    /// @param  _amount Amount of currency to withdraw
+    /// @param  _gas    Gas limit fallback function (in case recipient is contract)
     function withdrawFee(
         address _token,
         uint256 _amount,
