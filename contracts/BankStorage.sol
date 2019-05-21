@@ -156,7 +156,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
             IERC20 token = IERC20(_token);
             require(
                 token.allowance(msg.sender, address(this)) == totalAmount,
-                "Token allowed amount is not equal to amount to recieve"
+                "Token allowed amount is not equal to expected amount"
             );
             require(
                 token.transferFrom(msg.sender, address(this), totalAmount),
