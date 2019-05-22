@@ -4,6 +4,10 @@
 const BridgeFactory = artifacts.require('BridgeFactory');
 
 module.exports = (deployer) => {
+    if (!process.env.NEW_BRIDGE) {
+        return;
+    }
+    
     return deployer.then(async () => {
         if (!process.env.ACCOUNT) {
             throw new Error('Provide \'ACCOUNT\' option via environment, ' +

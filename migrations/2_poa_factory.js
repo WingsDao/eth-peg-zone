@@ -4,6 +4,10 @@
 const PoAGovernmentFactory = artifacts.require('PoAGovernmentFactory');
 
 module.exports = (deployer) => {
+    if (!process.env.POA) {
+        return;
+    }
+
     return deployer.then(async () => {
         if (!process.env.ACCOUNT) {
             throw new Error('Provide \'ACCOUNT\' option via environment, ' +

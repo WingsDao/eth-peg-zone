@@ -4,6 +4,10 @@
 const BankStorageFactory = artifacts.require('BankStorageFactory')
 
 module.exports = (deployer) => {
+    if (!process.env.BANK_STORAGE) {
+        return;
+    }
+
     return deployer.then(async () => {
         if (!process.env.ACCOUNT) {
             throw new Error('Provide \'ACCOUNT\' option via environment, ' +
