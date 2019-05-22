@@ -133,11 +133,11 @@ It's all, to see how to work with deployed contracts visit our (documentation)(/
 
 ## Tests
 
-    TODO
+In progress.
 
 ## Docs
 
-    TODO
+All code covered with tests, however documentation not generated yet.
 
 ## Contribution
 
