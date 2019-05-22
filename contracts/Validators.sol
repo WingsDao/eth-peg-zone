@@ -2,10 +2,11 @@ pragma solidity ^0.5.8;
 
 import "./helpers/SelfExec.sol";
 import "./BankStorage.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state
-contract Validators is SelfExec {
+contract Validators is SelfExec, Ownable {
     /// @notice            Happens when new validator added
     /// @param  _validator Validator that just added
     event ADDED_VALIDATOR(address indexed _validator);
@@ -37,32 +38,40 @@ contract Validators is SelfExec {
     /// @notice            Check if validator already exists in smart contract
     /// @param  _validator Address of validator to check
     modifier validatorExists(address _validator) {
-        require(isValidator[_validator]);
+        require(isValidator[_validator], "Validator doesnt exist");
         _;
     }
 
     /// @notice            Check if validator doesn't exist in smart contract
     /// @param  _validator Address of validator to check
     modifier validatorDoesntExist(address _validator) {
-        require(!isValidator[_validator]);
+        require(!isValidator[_validator], "Validator exists");
         _;
     }
 
-    /// @notice             Initialize smart contract with validators array
-    /// @param  _validators Initial validators array to initialize
+    /// @notice              Initialize validators contract with address of BankStorage
+    /// @param  _bankStorage Address of BankStorage contract
     constructor(
-        address[] memory _validators,
         address _bankStorage
     )
         public
     {
-        require(_bankStorage != address(0));
-        require(_validators.length >= MIN_VALIDATORS);
+        require(_bankStorage != address(0), "BankStorage address is empty");
 
         bankStorage = BankStorage(_bankStorage);
+    }
+
+    /// @notice             Setup initial validators list
+    /// @param  _validators Array with initial validators addresses
+    function setup(address[] memory _validators) public onlyOwner() {
+        require(validators.length  == 0, "Validators already initialized");
+        require(
+            _validators.length >= MIN_VALIDATORS,
+            "Required minimum validators amount for initialization"
+        );
 
         for (uint256 i = 0; i < _validators.length; i++) {
-            addValidator(_validators[i]);
+            addValidatorInternal(_validators[i]);
         }
     }
 
@@ -73,19 +82,9 @@ contract Validators is SelfExec {
     function addValidator(address _validator)
         public
         onlySelf()
-        validatorDoesntExist(_validator)
         returns (bool)
     {
-        require(_validator != address(0));
-        require(validators.length+1 < MAX_VALIDATORS);
-
-        validators.push(_validator);
-        isValidator[_validator] = true;
-
-        bankStorage.addValidator(address(uint160(_validator)));
-
-        emit ADDED_VALIDATOR(_validator);
-        return true;
+        return addValidatorInternal(_validator);
     }
 
     /// @notice Replace current validator with another one
@@ -103,9 +102,6 @@ contract Validators is SelfExec {
         validatorDoesntExist(_newValidator)
         returns (bool)
     {
-        require(isValidator[_validator]);
-        require(!isValidator[_newValidator]);
-
         for (uint256 i = 0; i < validators.length; i++) {
             if (validators[i] == _validator) {
                 validators[i] = _newValidator;
@@ -133,8 +129,10 @@ contract Validators is SelfExec {
         validatorExists(_validator)
         returns (bool)
     {
-        require(validators.length - 1 > MIN_VALIDATORS);
-        require(isValidator[_validator]);
+        require(
+            validators.length - 1 > MIN_VALIDATORS,
+            "Minimum validators amount reached"
+        );
 
         isValidator[_validator] = false;
 
@@ -150,6 +148,32 @@ contract Validators is SelfExec {
         bankStorage.removeActiveValidator(address(uint160(_validator)));
 
         emit REMOVED_VALIDATOR(_validator);
+        return true;
+    }
+
+    /// @notice            Internal function for adding validator
+    /// @dev               Done to be able to add validators by this contract internal and itself
+    /// @param  _validator Address of validator
+    /// @return            Returns boolean depends on success or fail
+    function addValidatorInternal(
+        address _validator
+    )
+        internal
+        validatorDoesntExist(_validator)
+        returns (bool)
+    {
+        require(_validator != address(0), "Validator address is zero");
+        require(
+            validators.length+1 < MAX_VALIDATORS,
+            "Reached maximum validators amount"
+        );
+
+        validators.push(_validator);
+        isValidator[_validator] = true;
+
+        bankStorage.addValidator(address(uint160(_validator)));
+
+        emit ADDED_VALIDATOR(_validator);
         return true;
     }
 }
