@@ -4,7 +4,7 @@
 const BridgeFactory = artifacts.require('BridgeFactory');
 
 module.exports = (deployer) => {
-    if (!process.env.CONTRACT == "NEW_BRIDGE") {
+    if (!process.env.CONTRACT == "NewBridge") {
         return;
     }
 
