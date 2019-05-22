@@ -1,25 +1,29 @@
 # Peg Zone Smart Contracts
 
+<<<<<<< HEAD
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 [![Gitter](https://badges.gitter.im/WingsChat/community.svg)](https://gitter.im/WingsChat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 **WINGS peg zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
+=======
+**WINGS Peg Zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
+>>>>>>> 4e92a99f1bd5d81fb18b21e60c649c8e154c9320
 
-Allowing to move ETH/ERC20 tokens between Ethereum
-blockchain and **WINGS blockchain**.
+Allowing to move ETH and ERC20 tokens between Ethereum
+blockchain and **WINGS Blockchain**.
 
-Right now security is reached by PoA validators, that inspected by community, later it should be replaced with Proof of Stake (PoS) algorithm to
+Right now security is reached by PoA validators, that inspected by WINGS community, later it should be replaced with Proof of Stake (PoS) algorithm to
 reach more decentralization.
 
 ## Features
 
-This is work in progress, but still general functional already implemented, like:
+This work is in progress, but general functionality is already implemented:
 
 * **N/2+1** validators needed to reach consensus
 * Allowing to remove/add validators by consensus
 * Validator takes fees for their support
-* Validator can propose to list any [ERC20 token](https://theethereum.wiki/w/index.php/ERC20_Token_Standard)
-* Support minimum exchange amount and capacity of any ETH/ERC20 token
+* Validator can propose for a listing any [ERC20 token](https://theethereum.wiki/w/index.php/ERC20_Token_Standard)
+* Support of a minimum exchange amount and capacity of any ETH/ERC20 token
 * Allowing to lock ETH/ERC20 tokens
 * Allowing to withdraw ETH/ERC20 tokens
 * Basic migration implemented
@@ -27,12 +31,10 @@ This is work in progress, but still general functional already implemented, like
 
 ## Motivation
 
-Main motivation to use multiplay native currencies from
-different blockchains inside **WINGS** blockchain, that will provide more liquidity for financial derivatives and financial operations in nutshell, and be not limited by one ecosystem. This idea opens new doors for
-many of many usages we can bring to blockchain technology, such as defi, swaps, futures, options.
+In a nutshell, main motivation to use multiple native currencies from different blockchains inside **WINGS** blockchain, is that it will provide more liquidity for financial derivatives and financial operations  and will not be limited by one ecosystem. This idea opens new doors for a many use cases we can bring to blockchain technology such as DeFi, Swaps, Futures, Options.
 
-During our development we are going to make a same
-solutions for popular blockchains, not only for Ethereum, like: **Bitcoin, EOS, Tron, Lisk, etc**.
+During our development we are going to make the same
+solutions for popular blockchains, such as **Bitcoin, EOS, Tron, Lisk, etc**.
 
 ## Structure
 
@@ -43,34 +45,29 @@ For easy explanation let's make a small glossary:
 * `Validator` - Validator account involved in PoA consensus
 * `Peggy`     - Peg zone allowing to move tokens between chains
 * `Consensus` - When any action requires validators N/2+1 approve, where N is total amount of PoA validators
-* `WETH`      - Example currency, 1:1 to ETH, but exists on Wings blockchain
+* `mETH`      - Example currency, 1:1 to ETH, but exists on Wings blockchain
 
-So let's look at **ETH to WETH UML** as example
+So let's look at **ETH to mETH UML** as example
 
-![Wings to WETH UML](/res/eth_wei_flow.png?raw=true "Wings to WETH UML")
+![Wings to wETH UML](/res/eth_wei_flow.png?raw=true "Wings to WETH UML")
 
-WETH to ETH conversion going to work in same way, but lock will start at Wings blockchain, and withdraw will happen at Ethereum blockchain.
+mETH to ETH conversion going to work in the same way, but lock will start at Wings blockchain, and withdraw will happen at Ethereum blockchain.
 
 Current repository contains smart contracts part like:
 
 * [PoAGovernment.sol](/contracts/PoAGovernment.sol) - Implements validators logic and PoA consensus logic on actions during peg zone life cycle
-* [Bridge.sol](/contracts/Bridge.sol)      - Implements bridge for lock/withdraw Ethereum and any listed ERC20 token, when user want to move his ETH/tokens to Wings blockchain
-* [BankStorage.sol](/contracts/BankStorage.sol)  - Keeps ETH/tokens and split fees between
-validators
+* [Bridge.sol](/contracts/Bridge.sol) - Implements bridge to lock/withdraw Ethereum and any listed ERC20 tokens, when user want to move his ETH or ERC20 tokens to Wings blockchain
+* [BankStorage.sol](/contracts/BankStorage.sol)  - Keeps ETH or ERC20 tokens and split fees between validators
 
 ## PoA multisignature logic
 
-In PoA implementations we have list of validators, maximum is
-11 of them, minimum is 3. Each sensitive call
-to Bridge done under validation consensus, means any validator
-can initiate a transaction to Bridge contract or to itself contract (in case needs to add new validator, remove it, etc),
-then once transaction reaches N/2+1 confirmations from the rest of validators, transaction could be executed.
+In PoA implementations we have list of validators, maximum is 11, minimum is 3. Each sensitive call to Bridge done under validation consensus, means any validator can initiate a transaction to Bridge contract or to itself contract (in case if needs to add new validator or remove it and etc), then, once transaction reaches N/2+1 confirmations from the rest of validators, transaction could be executed.
 
 ## Fees
 
-Fees splits between all active validators, and if value can't be divided without reminder smart contract will save reminder for next exchange.
+Fees splits between all active validators, and if value can't be divided without reminder, smart contract will save reminder for next exchange.
 
-To get accrued fees validator should make a call to BankStorage contract with amount and address of currency he wants to withdraw.
+To get accrued fees validator should make a call request to BankStorage contract with the amount and address of currency he wants to withdraw.
 
 ## Installation
 
@@ -147,7 +144,7 @@ It's all, to see how to work with deployed contracts visit our (documentation)(/
 
 ## Contribution
 
-Current project is still under development and going to evolve together with other parts of Wings blockchain as
+Current project is under development and going to evolve together with other parts of Wings blockchain as
 **Relay Layer** and Wings blockchain itself, anyway we have
 planned things to:
 
