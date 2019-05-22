@@ -78,7 +78,9 @@ Requirements:
 
 Installation:
 
-    yarn install
+```console
+yarn install
+```
 
 After execution of described commands it should be possible to launch tests,
 migrations.
@@ -96,24 +98,31 @@ To launch migration we have to provide correct environment variables.
 
 To deploy [BankStorageFactory](/contracts/factories/BankStorageFactory.sol):
 
-    CONTRACT=BankStorage ACCOUNT=0x5195.... truffle migrate
+```console
+CONTRACT=BankStorage ACCOUNT=0x5195.... truffle migrate
+```
 
 Where `ACCOUNT` is deployer account address, so replace value with your own.
 
 To deploy [PoAGovernmentFactory](/contracts/factories/PoAGovernment.sol):
 
-    CONTRACT=PoA ACCOUNT=0x5195.... truffle migrate
+```console
+CONTRACT=PoA ACCOUNT=0x5195.... truffle migrate
+```
 
 To deploy [BridgeFactory](/contract/factories/Bridge.sol):
 
-    CONTRACT=Bridge ACCOUNT=0x5195.... BANK_STORAGE_FACTORY=0x4579... POA_FACTORY=0xc6C11... truffle migrate
+```console
+CONTRACT=Bridge ACCOUNT=0x5195.... BANK_STORAGE_FACTORY=0x4579... POA_FACTORY=0xc6C11... truffle migrate
+```
 
 Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be copied from previous two commands outputs (where we deploy [BankStorageFactory](/contracts/factories/BankStorageFactory.sol) and [PoAGovernmentFactory](/contracts/factories/PoAGovernment.sol)).
 
 To deploy new [Bridge](/contracts/) instance:
 
-    CONTRACT=NEW_BRIDGE BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000
-    ETH_MIN_EXCHANGE=1000000000000000000000 ETH_FEE_PERCENTAGE=10 truffle migrate
+```console
+CONTRACT=NEW_BRIDGE BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000    ETH_MIN_EXCHANGE=1000000000000000000000 ETH_FEE_PERCENTAGE=10 truffle migrate
+```
 
 Where:
 
