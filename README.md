@@ -78,7 +78,7 @@ Requirements:
 
 Installation:
 
-```console
+```
 yarn install
 ```
 
@@ -98,7 +98,7 @@ To launch migration we have to provide correct environment variables.
 
 To deploy [BankStorageFactory](/contracts/factories/BankStorageFactory.sol):
 
-```console
+```
 CONTRACT=BankStorage ACCOUNT=0x5195.... truffle migrate
 ```
 
@@ -106,13 +106,13 @@ Where `ACCOUNT` is deployer account address, so replace value with your own.
 
 To deploy [PoAGovernmentFactory](/contracts/factories/PoAGovernment.sol):
 
-```console
+```
 CONTRACT=PoA ACCOUNT=0x5195.... truffle migrate
 ```
 
 To deploy [BridgeFactory](/contract/factories/Bridge.sol):
 
-```console
+```
 CONTRACT=Bridge ACCOUNT=0x5195.... BANK_STORAGE_FACTORY=0x4579... POA_FACTORY=0xc6C11... truffle migrate
 ```
 
@@ -120,7 +120,7 @@ Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be 
 
 To deploy new [Bridge](/contracts/) instance:
 
-```console
+```
 CONTRACT=NEW_BRIDGE BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000    ETH_MIN_EXCHANGE=1000000000000000000000 ETH_FEE_PERCENTAGE=10 truffle migrate
 ```
 
