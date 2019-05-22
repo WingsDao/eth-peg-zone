@@ -22,7 +22,7 @@ contract BridgeFactory is IFactory {
     /// @notice          Happens when new PoA contract created for instance
     //  @param  _owner   Owner of instance
     /// @param  _index   Index of instance
-    /// @param  _storage PoA Government address
+    /// @param  _poa     PoA Government address
     event NEW_POA(
         address indexed _owner,
         uint256 _index,
@@ -32,7 +32,7 @@ contract BridgeFactory is IFactory {
     /// @notice          Happens when new Bridge contract created for instance
     //  @param  _owner   Owner of instance
     /// @param  _index   Index of just created instance
-    /// @param  _storage Bridge address
+    /// @param  _bridge  Bridge address
     event NEW_BRIDGE(
         address indexed _owner,
         uint256 _index,
@@ -205,7 +205,7 @@ contract BridgeFactory is IFactory {
     /// @notice        Get instance by owner address and index
     /// @param  _owner Address of owner
     /// @param  _index Index of instance
-    /// @param         Return address of bridge, bank storage and poa contracts
+    /// @return        Return address of bridge, bank storage and poa contracts
     function getInstance(
         address _owner,
         uint256 _index
