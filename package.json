@@ -4,7 +4,6 @@
     "version": "1.0.0",
     "dependencies": {
         "ganache-cli": "^6.4.3",
-        "global": "^4.3.2",
         "openzeppelin-solidity": "^2.2.0",
         "truffle": "^5.0.18"
     },
