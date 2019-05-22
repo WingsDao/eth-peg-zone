@@ -71,7 +71,59 @@ To get accrued fees validator should make a call to BankStorage contract with am
 
 ## Installation
 
-    TODO
+Requirements:
+
+    * Node.js
+    * [Truffle Framework](https://truffleframework.com)
+
+Installation:
+
+    yarn install
+
+After execution of described commands it should be possible to launch tests,
+migrations.
+
+## Migrations
+
+There is few migrations scripts:
+
+* [BankStorageFactory](/migrations/1_bank_storage_factory.js) - Migrations for [BankStorage](/contracts/BankStorage.sol) contract, based on factory
+* [PoAFactory migration](/migrations/2_poa_factory.js) - Migrations for [PoAGovernment](/contracts/PoAGovernment.sol) contract, same here based on factory
+* [BridgeFactory migration](/migrations/3_bridge_factory.js) - Migration for [Bridge](/contracts/Bridge.sol) contract, based on factory
+* [Bridge creation](/migrations/4_new_bridge.js) - Creating new [Bridge](/contracts/Bridge.sol) / [PoA](/contracts/PoAGovernment.sol) / [BankStorage](/contracts/BankStorage.sol) instances, connect them (ownership, etc), based on previously created factories
+
+To launch migration we have to provide correct environment variables.
+
+To deploy [BankStorageFactory](/contracts/factories/BankStorageFactory.sol):
+
+    CONTRACT=BankStorage ACCOUNT=0x5195.... truffle migrate
+
+Where `ACCOUNT` is deployer account address, so replace value with your own.
+
+To deploy [PoAGovernmentFactory](/contracts/factories/PoAGovernment.sol):
+
+    CONTRACT=PoA ACCOUNT=0x5195.... truffle migrate
+
+To deploy [BridgeFactory](/contract/factories/Bridge.sol):
+
+    CONTRACT=Bridge ACCOUNT=0x5195.... BANK_STORAGE_FACTORY=0x4579... POA_FACTORY=0xc6C11... truffle migrate
+
+Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be copied from previous two commands outputs (where we deploy [BankStorageFactory](/contracts/factories/BankStorageFactory.sol) and [PoAGovernmentFactory](/contracts/factories/PoAGovernment.sol)).
+
+To deploy new [Bridge](/contracts/) instance:
+
+    CONTRACT=NEW_BRIDGE BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000
+    ETH_MIN_EXCHANGE=1000000000000000000000 ETH_FEE_PERCENTAGE=10 truffle migrate
+
+Where:
+
+* `BRIDGE_FACTORY` - Could be copied from previous command (where we deploy [BridgeFactory](/contracts/factories/BridgeFactory.sol))
+* `VALIDATORS` - Comma seperated string contains initial validators addresses
+* `ETH_CAPACITY` - Maximum capacity for ETH exchange contract
+* `ETH_MIN_EXCHANGE` - Minimum ETH amount to exchange
+* `ETH_FEE_PERCENTAGE` - Fee percent that validator takes for their work for ETH exchange, minimum is 1, maximum is 9999 (normalized percent value, e.g. 100 is 1%, 1 is 0.01%, 9999 is 99.99%)
+
+It's all, to see how to work with deployed contracts visit our (documentation)(/#docs).
 
 ## Tests
 
@@ -95,6 +147,8 @@ planned things to:
 
 You are ready to contribute, but please, try to follow
 solidity [style guide](https://solidity.readthedocs.io/en/v0.5.3/style-guide.html) and leave comments on new functional.
+
+In case of modification our Javascript code ([migrations](/migrations) and [tests](/test)) follow our [eslint](/.eslintrc) configuration.
 
 ## License
 
