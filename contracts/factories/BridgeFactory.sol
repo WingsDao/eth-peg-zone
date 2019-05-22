@@ -92,8 +92,9 @@ contract BridgeFactory is IFactory {
 
         instances[msg.sender][++byUser[msg.sender]] = Instance({
             bankStorage: storageAddress,
-            poa: address(0),
-            bridge: address(0)
+            poa:         address(0),
+            bridge:      address(0),
+            ready:       true
         });
 
         emit NEW_STORAGE(msg.sender, byUser[msg.sender], storageAddress);
@@ -147,7 +148,7 @@ contract BridgeFactory is IFactory {
         returns (address)
     {
         require(
-            instances[msg.seder][_index].poa == address(0),
+            instances[msg.sender][_index].poa == address(0),
             "PoA contract already created"
         );
 
@@ -161,7 +162,7 @@ contract BridgeFactory is IFactory {
 
         emit NEW_POA(msg.sender, _index, poaAddress);
 
-        returns poaAddress;
+        return poaAddress;
     }
 
     /// @notice              Building and connecting all created contracts to make it work
@@ -176,9 +177,8 @@ contract BridgeFactory is IFactory {
         public
         instanceExists(msg.sender, _index)
     {
-        require(1instance.ready, "Instance already initialized");
-
         Instance storage instance = instances[msg.sender][_index];
+        require(!instance.ready, "Instance already initialized");
 
         PoAGovernment government = PoAGovernment(instance.poa);
         BankStorage bankStorage  = BankStorage(instance.bankStorage);
@@ -217,7 +217,7 @@ contract BridgeFactory is IFactory {
         Instance memory instance = instances[_owner][_index];
 
         return (
-            instances.bridge,
+            instance.bridge,
             instance.bankStorage,
             instance.poa,
             instance.ready
