@@ -21,12 +21,12 @@ contract PoAGovernment is Validators {
     /// @param  _transactionId Id of transaction that submited
     event TX_SUBMISSED(address indexed _sender, uint256 indexed _transactionId);
 
-    /// @notice               Happens when transaction executed
+    /// @notice                Happens when transaction executed
     /// @param  _transactionId Id of transaction that just executed
     event TX_EXECUTED(uint256 indexed _transactionId);
 
     /// @notice                 Happens when transaction execution failed
-    /// @param  _transactionId   Id of transaction that submited
+    /// @param  _transactionId  Id of transaction that submited
     event TX_EXECUTION_FAILED(uint256 indexed _transactionId);
 
     /// @notice         Happens when amount of validators confirmations changed
@@ -67,7 +67,10 @@ contract PoAGovernment is Validators {
     /// @param _transactionId Id of transaction to verify if it's confirmed
     /// @param _validator     Validator address
     modifier confirmed(uint256 _transactionId, address _validator) {
-        require(confirmations[_transactionId][_validator]);
+        require(
+            confirmations[_transactionId][_validator],
+            "Transaction isnt confirmed"
+        );
         _;
     }
 
@@ -75,21 +78,30 @@ contract PoAGovernment is Validators {
     /// @param  _transactionId  Id of transaction to verify if it's not confirmed
     /// @param  _validator      Validator address
     modifier notConfirmed(uint256 _transactionId, address _validator) {
-        require(!confirmations[_transactionId][_validator]);
+        require(
+            !confirmations[_transactionId][_validator],
+            "Transaction is confirmed"
+        );
         _;
     }
 
     /// @notice                Check if transaction not executed yet
     /// @param  _transactionId Id of transaction
     modifier notExecuted(uint256 _transactionId) {
-        require(!transactions[_transactionId].executed);
+        require(
+            !transactions[_transactionId].executed,
+            "Transaction executed already"
+        );
         _;
     }
 
     /// @notice                Check if transaction exists by id
     /// @param  _transactionId Id of transaction to check
     modifier transactionExists(uint256 _transactionId) {
-        require(transactions[_transactionId].creator != address(0));
+        require(
+            transactions[_transactionId].creator != address(0),
+            "Trasaction doesnt exist"
+        );
         _;
     }
 
@@ -97,24 +109,32 @@ contract PoAGovernment is Validators {
     /// @param   _transactionId Id of transaction
     //  @param   _hash          Hash of transaction data to match
     modifier transactionHashMatch(uint256 _transactionId, bytes32 _hash) {
-        require(transactions[_transactionId].hash == _hash);
+        require(
+            transactions[_transactionId].hash == _hash,
+            "Trasaction hash doesnt match"
+        );
         _;
     }
 
-    /// @notice            Constructor, inherits by validators contract
-    /// @param _validators Array of validators
+    /// @notice              Constructor, inherits by validators contract
+    /// @param  _target      Target contract of PoA, validators execute this contract functions
+    /// @param  _bankStorage Address of BankStorage contract
     constructor(
-        address[] memory _validators,
         address _target,
         address _bankStorage
     )
-        Validators(_validators, _bankStorage)
+        Validators(_bankStorage)
         public
     {
-        require(_target != address(0));
+        require(_target != address(0), "Target address is empty");
 
         target = _target;
+    }
 
+    /// @notice             Setup contract initial validators, should be called before usage of contract
+    /// @param  _validators Addresses of initial validators 
+    function setup(address[] memory _validators) public onlyOwner() {
+        super.setup(_validators);
         updateRequirement(_validators.length);
     }
 
