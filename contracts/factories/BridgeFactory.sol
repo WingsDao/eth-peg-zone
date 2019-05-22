@@ -94,7 +94,7 @@ contract BridgeFactory is IFactory {
             bankStorage: storageAddress,
             poa:         address(0),
             bridge:      address(0),
-            ready:       true
+            ready:       false
         });
 
         emit NEW_STORAGE(msg.sender, byUser[msg.sender], storageAddress);
@@ -133,7 +133,7 @@ contract BridgeFactory is IFactory {
 
         emit NEW_BRIDGE(msg.sender, _index, address(bridge));
 
-        return address(bridge);
+        return address(0);
     }
 
     /// @notice         Create PoA contract for new bridge instance
