@@ -4,7 +4,7 @@
 const PoAGovernmentFactory = artifacts.require('PoAGovernmentFactory');
 
 module.exports = (deployer) => {
-    if (!process.env.CONTRACT == "PoA") {
+    if (!process.env.CONTRACT != "PoA") {
         return;
     }
 
