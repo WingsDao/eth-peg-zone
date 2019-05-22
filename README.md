@@ -1,13 +1,9 @@
 # Peg Zone Smart Contracts
 
-<<<<<<< HEAD
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 [![Gitter](https://badges.gitter.im/WingsChat/community.svg)](https://gitter.im/WingsChat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 **WINGS peg zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
-=======
-**WINGS Peg Zone** smart contracts implementation, based on PoA (Proof of Authority) government model, supports **ETH and any ERC20 approved token**.
->>>>>>> 4e92a99f1bd5d81fb18b21e60c649c8e154c9320
 
 Allowing to move ETH and ERC20 tokens between Ethereum
 blockchain and **WINGS Blockchain**.
