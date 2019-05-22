@@ -112,7 +112,8 @@ Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be 
 
 To deploy new [Bridge](/contracts/) instance:
 
-    CONTRACT=NEW_BRIDGE BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000
+console
+    CONTRACT=NewBridge BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000
     ETH_MIN_EXCHANGE=1000000000000000000000 ETH_FEE_PERCENTAGE=10 truffle migrate
 
 Where:
