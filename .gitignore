@@ -87,4 +87,8 @@ typings/
 # DynamoDB Local files
 .dynamodb/
 
+# Standard Mac OS DS_Store
 .DS_Store
+
+# Truffle build folder
+build/
