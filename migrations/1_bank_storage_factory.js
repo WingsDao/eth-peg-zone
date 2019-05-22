@@ -4,7 +4,7 @@
 const BankStorageFactory = artifacts.require('BankStorageFactory')
 
 module.exports = (deployer) => {
-    if (!process.env.BANK_STORAGE) {
+    if (!process.env.CONTRACT == "BankStorage") {
         return;
     }
 
