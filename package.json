@@ -1,6 +1,6 @@
 {
-    "name": "wings-peggy",
-    "description": "Wings Peggy based on PoA goverement implementation for Wings blockchain",
+    "name": "eth-peg-zone",
+    "description": "Wings Ethereum peg zone based on PoA goverement implementation for Wings blockchain",
     "version": "1.0.0",
     "dependencies": {
         "ganache-cli": "^6.4.3",
@@ -11,5 +11,5 @@
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "Wings Stiftung",
-    "license": "UNLICENSED"
+    "license": "GPLv3"
 }
