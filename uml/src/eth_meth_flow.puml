@@ -6,7 +6,7 @@ skinparam roundcorner 15
 skinparam ParticipantPadding 20
 skinparam BoxPadding 10
 
-title  __Simple__ convert\n ETH to WETH
+title  __Simple__ convert\n ETH to mETH
 footer Wings Peg Zone Implementation
 
 actor Alice
@@ -25,7 +25,7 @@ participant "Wings Blockchain" as Blockchain
 Alice   -> Bridge: Deposit ETH
 note left
     Deposit ETH to
-    convert to WETH
+    convert to mETH
 end note
 
 activate Bridge
@@ -42,7 +42,7 @@ deactivate Bridge
 
 activate   Relay
 ...N confirmations later...
-Relay   -> Blockchain: Issue WETH on Alice address\n inside Wings Blockchain
+Relay   -> Blockchain: Issue mETH on Alice address\n inside Wings Blockchain
 note left
     Relay layer consists
     of validators nodes
@@ -52,6 +52,6 @@ note left
     on both chains by their consensus
 end note
 
-Blockchain -> Alice: Alice got WETH\n on Wings blockchain
+Blockchain -> Alice: Alice got mETH\n on Wings blockchain
 deactivate Relay
 @enduml
