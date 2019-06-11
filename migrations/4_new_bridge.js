@@ -47,7 +47,7 @@ module.exports = (deployer) => {
 
         const bridgeFactory = await BridgeFactory.at(process.env.BRIDGE_FACTORY);
 
-        console.log('\tCreating new Bridge contract...');
+        console.log('\tCreating new Bridge contract...\n');
 
         console.log('\t1. Creating BankStorage contract');
 
