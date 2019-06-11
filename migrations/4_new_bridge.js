@@ -95,6 +95,6 @@ module.exports = (deployer) => {
 
         const bridgeAddress = tx.logs[0].args[0];
 
-        console.log(`\tDone. Bridge address: ${bridgeAddress}`);
+        console.log(`\n\tDone. Bridge address: ${bridgeAddress}`);
     });
 };
