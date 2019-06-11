@@ -1,4 +1,5 @@
 pragma solidity ^0.5.8;
+pragma experimental ABIEncoderV2;
 
 import "./IFactory.sol";
 import "./BankStorageFactory.sol";
@@ -165,14 +166,16 @@ contract BridgeFactory is IFactory {
         return poaAddress;
     }
 
-    /// @notice              Building and connecting all created contracts to make it work
-    /// @dev                 Stage 4, should be executed after all contracts created
-    /// @param   _validators List of validators for PoA Government
-    /// @param  _index       Index of instance
-    /// @return              Address of Brdige contract
+    /// @notice                  Building and connecting all created contracts to make it work
+    /// @dev                     Stage 4, should be executed after all contracts created
+    /// @param  _ethAddresses    List of eth validators addresses for PoA Government
+    /// @param  _cosmosAddresses List of cosmos validators addresses, should match previous argument
+    /// @param  _index           Index of instance
+    /// @return                  Address of Brdige contract
     function build(
-        address[] memory _validators,
-        uint256 _index
+        address[] memory _ethAddresses,
+        bytes[]   memory _cosmosAddresses,
+        uint256          _index
     )
         public
         instanceExists(msg.sender, _index)
@@ -187,7 +190,7 @@ contract BridgeFactory is IFactory {
         bankStorage.setup(address(government), bridge.getEthTokenAddress());
         bankStorage.transferOwnership(address(bridge));
 
-        government.setup(_validators);
+        government.setup(_ethAddresses, _cosmosAddresses);
         bridge.transferOwnership(address(government));
 
         instance.ready = true;

@@ -1,4 +1,5 @@
 pragma solidity ^0.5.8;
+pragma experimental ABIEncoderV2;
 
 import "./Validators.sol";
 
@@ -131,11 +132,18 @@ contract PoAGovernment is Validators {
         target = _target;
     }
 
-    /// @notice             Setup contract initial validators, should be called before usage of contract
-    /// @param  _validators Addresses of initial validators 
-    function setup(address[] memory _validators) public onlyOwner() {
-        super.setup(_validators);
-        updateRequirement(_validators.length);
+    /// @notice                  Setup contract initial validators, should be called before usage of contract
+    /// @param  _ethAddresses    ETH addresses of initial validators
+    /// @param  _cosmosAddresses Cosmos addresses of initial validators
+    function setup(
+        address[] memory _ethAddresses,
+        bytes[]   memory _cosmosAddresses
+    )
+        public
+        onlyOwner()
+    {
+        super.setup(_ethAddresses, _cosmosAddresses);
+        updateRequirement(_ethAddresses.length);
     }
 
     /// @notice       Allows an validator to submit and confirm a transaction
@@ -336,7 +344,7 @@ contract PoAGovernment is Validators {
         uint256 count = 0;
 
         for (uint256 i = 0; i < validators.length; i++) {
-            if (confirmations[_transactionId][validators[i]])
+            if (confirmations[_transactionId][validators[i].ethAddress])
                 count += 1;
 
             if (count >= required)
@@ -357,7 +365,7 @@ contract PoAGovernment is Validators {
         uint256 count = 0;
 
         for (uint i = 0; i < validators.length; i++)
-            if (confirmations[_transactionId][validators[i]])
+            if (confirmations[_transactionId][validators[i].ethAddress])
                 count += 1;
 
         return count;
