@@ -70,8 +70,8 @@ To get accrued fees validator should make a call request to BankStorage contract
 
 Requirements:
 
-    * Node.js
-    * [Truffle Framework](https://truffleframework.com)
+* [Node.js](https://nodejs.org/en/)
+* [Truffle Framework](https://truffleframework.com)
 
 Installation:
 
