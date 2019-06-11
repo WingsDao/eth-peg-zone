@@ -94,7 +94,11 @@ module.exports = (deployer) => {
         );
 
         const bridgeAddress = tx.logs[0].args[0];
+        const args = await bridgeFactory.getInstance(account, index);
 
-        console.log(`\n\tDone. Bridge address: ${bridgeAddress}`);
+        console.log('\tDone.\n');
+        console.log(`\tBridge address:      ${bridgeAddress}`);
+        console.log(`\tBankStorage address: ${args[1]}`);
+        console.log(`\tPoA address:         ${args[2]}`);
     });
 };
