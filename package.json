@@ -3,6 +3,7 @@
     "description": "Wings Ethereum peg zone based on PoA goverement implementation for Wings blockchain",
     "version": "1.0.0",
     "dependencies": {
+        "bech32": "^1.1.3",
         "ganache-cli": "^6.4.3",
         "openzeppelin-solidity": "^2.2.0",
         "truffle": "^5.0.18"

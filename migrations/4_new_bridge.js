@@ -2,9 +2,10 @@
 
 /*global artifacts*/
 const BridgeFactory = artifacts.require('BridgeFactory');
+const cosmos        = require('../helpers/cosmos');
 
 module.exports = (deployer) => {
-    if (process.env.CONTRACT != "NewBridge") {
+    if (process.env.CONTRACT != 'NewBridge') {
         return;
     }
 
@@ -19,9 +20,15 @@ module.exports = (deployer) => {
                 'like BRIDGE_FACTORY=0x4579...');
         }
 
-        if (!process.env.VALIDATORS) {
-            throw new Error('Provide \'VALIDATORS\' option via environment, ' +
-                'like VALIDATORS=0x4579...,0x2f39...(comma seperated addresses)');
+        if (!process.env.ETH_ADDRESSES) {
+            throw new Error('Provide \'ETH_ADDRESSES\' option via environment, ' +
+                'like ETH_ADDRESSES=0x4579...,0x2f39...(comma seperated addresses)');
+        }
+
+        if (!process.env.COSMOS_ADDRESSES) {
+            throw new Error('Provide \'ETH_ADDRESSES\' option via environment, ' +
+                'like COSMOS_ADDRESSES=cosmos1avmaz...,' +
+                'cosmos1ghaamx..., (comma seperated addresses)');
         }
 
         if (!process.env.ETH_CAPACITY) {
@@ -40,10 +47,16 @@ module.exports = (deployer) => {
         }
 
         const account           = process.env.ACCOUNT;
-        const validators        = process.env.VALIDATORS.split(',');
+        const ethAddresses      = process.env.ETH_ADDRESSES.split(',');
+        let   cosmosAddresses   = process.env.COSMOS_ADDRESSES.split(',');
         const ethCapacity       = process.env.ETH_CAPACITY;
         const ethMinExchange    = process.env.ETH_MIN_EXCHANGE;
         const ethFeePercentage  = process.env.ETH_FEE_PERCENTAGE;
+
+        if (ethAddresses.length != cosmosAddresses.length) {
+            throw new Error('Eth addresses amount should be ' +
+                'equal Cosmos addresses amount')
+        }
 
         const bridgeFactory = await BridgeFactory.at(process.env.BRIDGE_FACTORY);
 
@@ -84,8 +97,13 @@ module.exports = (deployer) => {
             }
         );
 
+        cosmosAddresses = cosmosAddresses.map(a => cosmos.AddressToBytes(a));
+
         console.log('\t4. Connect contracts...');
-        tx = await bridgeFactory.build(validators, index,
+        tx = await bridgeFactory.build(
+            ethAddresses,
+            cosmosAddresses,
+            index,
             {
                 from:     account,
                 gas:      process.env.GAS_LIMIT,
