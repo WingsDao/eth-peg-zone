@@ -174,7 +174,7 @@ contract BridgeFactory is IFactory {
     /// @return                  Address of Brdige contract
     function build(
         address[] memory _ethAddresses,
-        bytes[]   memory _cosmosAddresses,
+        bytes32[] memory _cosmosAddresses,
         uint256          _index
     )
         public

@@ -11,7 +11,7 @@ contract Validators is SelfExec, Ownable {
     /// @notice                Happens when new validator added
     /// @param  _ethAddress    Validator that just added
     /// @param  _cosmosAddress Cosmos address of validator
-    event ADDED_VALIDATOR(address indexed _ethAddress, bytes _cosmosAddress);
+    event ADDED_VALIDATOR(address indexed _ethAddress, bytes32 _cosmosAddress);
 
     /// @notice                Happens when validator replaced
     /// @param  _ethAddress    Validator that replaced with new one
@@ -20,7 +20,7 @@ contract Validators is SelfExec, Ownable {
     event REPLACED_VALIDATOR(
         address indexed _ethAddress,
         address indexed _ethNewAddress,
-        bytes           _cosmosAddress
+        bytes32         _cosmosAddress
     );
 
     /// @notice              Happens when validator removed from list of validators
@@ -39,7 +39,7 @@ contract Validators is SelfExec, Ownable {
     /// @notice Validators struct
     struct Validator {
         address ethAddress;
-        bytes   cosmosAddress;
+        bytes32 cosmosAddress;
     }
 
     /// @notice Array of all validators and their addressess
@@ -79,12 +79,12 @@ contract Validators is SelfExec, Ownable {
     /// @param  _cosmosAddresses Array with initial cosmos validators addresses
     function setup(
         address[] memory _ethAddresses,
-        bytes[]   memory _cosmosAddresses
+        bytes32[] memory _cosmosAddresses
     )
         public
         onlyOwner()
     {
-        require(_ethAddresses.length == 0, "Validators already initialized");
+        require(validators.length == 0, "Validators already initialized");
         require(
             _ethAddresses.length >= MIN_VALIDATORS,
             "Required minimum validators amount for initialization"
@@ -104,7 +104,7 @@ contract Validators is SelfExec, Ownable {
     /// @param  _cosmosAddress Cosmos address of validator
     /// @dev                   Possible to execute only by contract itself
     /// @return                Returns boolean depends on success or fail
-    function addValidator(address _ethAddress, bytes memory _cosmosAddress)
+    function addValidator(address _ethAddress, bytes32 _cosmosAddress)
         public
         onlySelf()
         returns (bool)
@@ -119,9 +119,9 @@ contract Validators is SelfExec, Ownable {
     /// @dev                   Possible to execute only by contract itself
     /// @return                Returns boolean depends on success or fail
     function replaceValidator(
-        address        _ethAddress,
-        address        _ethNewAddress,
-        bytes   memory _cosmosAddress
+        address _ethAddress,
+        address _ethNewAddress,
+        bytes32 _cosmosAddress
     )
         public
         onlySelf()
@@ -188,8 +188,8 @@ contract Validators is SelfExec, Ownable {
     /// @param  _cosmosAddress Cosmos address of validator
     /// @return                Returns boolean depends on success or fail
     function addValidatorInternal(
-        address        _ethAddress,
-        bytes   memory _cosmosAddress
+        address _ethAddress,
+        bytes32 _cosmosAddress
     )
         internal
         validatorDoesntExist(_ethAddress)

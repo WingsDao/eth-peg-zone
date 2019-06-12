@@ -137,7 +137,7 @@ contract PoAGovernment is Validators {
     /// @param  _cosmosAddresses Cosmos addresses of initial validators
     function setup(
         address[] memory _ethAddresses,
-        bytes[]   memory _cosmosAddresses
+        bytes32[] memory _cosmosAddresses
     )
         public
         onlyOwner()
