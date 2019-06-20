@@ -55,7 +55,7 @@ module.exports = (deployer) => {
 
         if (ethAddresses.length != cosmosAddresses.length) {
             throw new Error('Eth addresses amount should be ' +
-                'equal Cosmos addresses amount')
+                'equal Cosmos addresses amount');
         }
 
         const bridgeFactory = await BridgeFactory.at(process.env.BRIDGE_FACTORY);
