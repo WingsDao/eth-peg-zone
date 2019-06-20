@@ -50,11 +50,13 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
     /// @param  _currencyId Id of currency
     /// @param  _spender    Address of account who convert currency
+    /// @param  _id         Id of exchange
     /// @param  _amount     Amount of currency that will be converted
     event CURRENCY_EXCHANGED(
         uint256 indexed _currencyId,
         address indexed _spender,
         bytes32 indexed _recipient,
+        uint256 _id,
         uint256 _amount
     );
 
@@ -86,6 +88,9 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice Detects is contract paused or not
     bool public paused;
+
+    /// @notice Exchange id
+    uint256 public exchangeId;
 
     /// @notice Total currencies counts
     uint256 public currenciesCount;
@@ -241,7 +246,8 @@ contract Bridge is Ownable, ReentrancyGuard {
         require(_feePercentage < MAX_FEE, "Fee great then max fee");
         require(bytes(_symbol).length > 0, "Symbol is empty");
 
-        currencies[currenciesCount] = Currency({
+        uint256 index = currenciesCount;
+        currencies[index] = Currency({
             tokenContract: _tokenContract,
             symbol:        _symbol,
             minExchange:   _minExchange,
@@ -253,9 +259,10 @@ contract Bridge is Ownable, ReentrancyGuard {
         tokenToCurrency[_tokenContract] = currenciesCount;
         isCurrency[_tokenContract] = true;
 
-        emit ADDED_CURRENCY(_tokenContract, currenciesCount++, _symbol);
+        emit ADDED_CURRENCY(_tokenContract, index, _symbol);
 
-        return currenciesCount;
+        currenciesCount++;
+        return index;
     }
 
     /// @notice              Change capacity for specific owner
@@ -358,6 +365,24 @@ contract Bridge is Ownable, ReentrancyGuard {
         return currencies[ethIndex].tokenContract;
     }
 
+    /// @notice Get currency capacity in wei
+    /// @param  _currencyId  Id of currency
+    /// @return              Capacity amount
+    function getCapacity(uint256 _currencyId)
+        public
+        view
+        returns (uint256)
+    {
+        return currencies[_currencyId].capacity;
+    }
+
+    /// @notice Get currency balance in wei
+    /// @param  _currencyId  Id of currency
+    /// @return              Balance
+    function getBalance(uint256 _currencyId) public view returns (uint256) {
+        return currencies[_currencyId].balance;
+    }
+
     /// @notice           Convertation function for ETH and tokens
     /// @param _spender   Address of account who spend ETH/token
     /// @param _recipient Recipient address (bech32)
@@ -372,15 +397,15 @@ contract Bridge is Ownable, ReentrancyGuard {
     )
         internal
     {
-        require(
-            _amount >= _currency.minExchange,
-            "Amount should be great or equal then min exchage"
-        );
-
         uint256 currencyId = tokenToCurrency[_currency.tokenContract];
 
         uint256 fee = getFee(currencyId, _amount);
         uint256 realValue = _amount.sub(fee);
+
+        require(
+            realValue >= _currency.minExchange,
+            "Amount should be great or equal then min exchage"
+        );
 
         require(
             _currency.balance.add(realValue) <= _currency.capacity,
@@ -405,8 +430,6 @@ contract Bridge is Ownable, ReentrancyGuard {
                 );
 
             require(success, "ETH transfer is not successful");
-
-            emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, _amount);
         } else {
             IERC20 token = IERC20(_currency.tokenContract);
 
@@ -414,6 +437,7 @@ contract Bridge is Ownable, ReentrancyGuard {
                 token.allowance(_spender, address(this)) >= _amount,
                 "Token allowed amount is not equal to expected amount"
             );
+
             require(
                 token.transferFrom(_spender, address(this), _amount),
                 "Token transfer is not successful"
@@ -429,8 +453,8 @@ contract Bridge is Ownable, ReentrancyGuard {
                 realValue,
                 fee
             );
-
-            emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, _amount);
         }
+
+        emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, exchangeId++, _amount);
     }
 }
