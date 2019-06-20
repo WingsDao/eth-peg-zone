@@ -26,7 +26,7 @@ module.exports = (deployer) => {
         }
 
         if (!process.env.COSMOS_ADDRESSES) {
-            throw new Error('Provide \'ETH_ADDRESSES\' option via environment, ' +
+            throw new Error('Provide \'COSMOS_ADDRESSES\' option via environment, ' +
                 'like COSMOS_ADDRESSES=cosmos1avmaz...,' +
                 'cosmos1ghaamx..., (comma seperated addresses)');
         }

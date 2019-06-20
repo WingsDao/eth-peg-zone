@@ -118,13 +118,14 @@ Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be 
 To deploy new [Bridge](/contracts/) instance:
 
 ```
-CONTRACT=NewBridge ACCOUNT=0x5195.... BRIDGE_FACTORY=0x4579... VALIDATORS=0x4579...,0x2f39... ETH_CAPACITY=1000000000000000000000 ETH_MIN_EXCHANGE=1000 ETH_FEE_PERCENTAGE=10 GAS_LIMIT=6000000 truffle migrate
+CONTRACT=NewBridge ACCOUNT=0x5195.... BRIDGE_FACTORY=0x4579... ETH_ADDRESSESs=0x4579...,0x2f39... ETH_CAPACITY=1000000000000000000000 ETH_MIN_EXCHANGE=1000 ETH_FEE_PERCENTAGE=10 GAS_LIMIT=6000000 truffle migrate
 ```
 
 Where:
 
 * `BRIDGE_FACTORY` - Could be copied from previous command (where we deploy [BridgeFactory](/contracts/factories/BridgeFactory.sol))
-* `VALIDATORS` - Comma seperated string contains initial validators addresses
+* `ETH_ADDRESSES` - Comma seperated string contains initial validators ETH addresses
+* `COSMOS_ADDRESSES` - Comma seperated string contains initial validators COSMOS addresses
 * `ETH_CAPACITY` - Maximum capacity for ETH exchange contract in WEI
 * `ETH_MIN_EXCHANGE` - Minimum ETH amount to exchange in WEI
 * `ETH_FEE_PERCENTAGE` - Fee percent that validator takes for their work for ETH exchange, minimum is 1, maximum is 9999 (normalized percent value, e.g. 100 is 1%, 1 is 0.01%, 9999 is 99.99%)
