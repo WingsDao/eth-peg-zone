@@ -1,10 +1,10 @@
 'use strict';
 
 /*global artifacts*/
-const BankStorageFactory = artifacts.require('BankStorageFactory')
+const BankStorageFactory = artifacts.require('BankStorageFactory');
 
 module.exports = (deployer) => {
-    if (process.env.CONTRACT != "BankStorage") {
+    if (process.env.CONTRACT != 'BankStorage') {
         return;
     }
 

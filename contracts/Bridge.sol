@@ -16,9 +16,11 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice                 Happens when new token listed
     /// @param   _tokenContract Contract of token that listed
     /// @param   _currencyId    Id of currency
+    /// @param   _symbol        Currency symbol
     event ADDED_CURRENCY(
         address indexed _tokenContract,
-        uint256 _currencyId
+        uint256 _currencyId,
+        string  _symbol
     );
 
     /// @notice Happens whenn capacity of currency changed
@@ -48,10 +50,13 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice             Happens when new convertation of currency happend, e.g. ETH -> WETH
     /// @param  _currencyId Id of currency
     /// @param  _spender    Address of account who convert currency
+    /// @param  _id         Id of exchange
     /// @param  _amount     Amount of currency that will be converted
     event CURRENCY_EXCHANGED(
         uint256 indexed _currencyId,
         address indexed _spender,
+        bytes32 indexed _recipient,
+        uint256 _id,
         uint256 _amount
     );
 
@@ -68,6 +73,7 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice Describing currency structure
     struct Currency {
         address tokenContract;
+        string  symbol;
         uint256 minExchange;
         uint256 capacity;
         uint256 feePercentage;
@@ -82,6 +88,9 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice Detects is contract paused or not
     bool public paused;
+
+    /// @notice Exchange id
+    uint256 public exchangeId;
 
     /// @notice Total currencies counts
     uint256 public currenciesCount;
@@ -152,23 +161,21 @@ contract Bridge is Ownable, ReentrancyGuard {
 
         ethIndex = addCurrency(
             address(0),
+            "ETH",
             _ethCapacity,
             _ethMinAmount,
             _ethFeePercentage
         );
     }
 
-    /// @notice Payable function for ETH convertation
-    function () payable external {
-        exchange(ethIndex, msg.value);
-    }
-
     /// @notice             Exchanges ETH or any token
     /// @param  _currencyId Id of currency to exchange
+    /// @param  _recipient  Cosmos address to recieve currency
     /// @param  _amount     Amount of currency to exchange
     /// @dev                Works only if contract not paused
     function exchange(
         uint256 _currencyId,
+        bytes32 _recipient,
         uint256 _amount
     )
         payable
@@ -177,7 +184,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         currencyExistsById(_currencyId)
     {
         Currency storage currency = currencies[_currencyId];
-        convertation(msg.sender, _amount, currency);
+        convertation(msg.sender, _recipient, _amount, currency);
     }
 
     /// @notice             Withdraw currency to recipient, could be called by owner only (government)
@@ -215,15 +222,17 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice                Add currency to currecies list
     /// @param  _tokenContract Contract of token
+    /// @param  _symbol        Currency symbol
     /// @param  _minExchange   Minimum amount to exchange in case of this currency
     /// @param  _capacity      Maximum capacity of currency in this contract
     /// @param  _feePercentage Fee percentage that validators take for exchange
     /// @return                Return id of just added currency
     function addCurrency(
-        address _tokenContract,
-        uint256 _capacity,
-        uint256 _minExchange,
-        uint256 _feePercentage
+        address        _tokenContract,
+        string  memory _symbol,
+        uint256        _capacity,
+        uint256        _minExchange,
+        uint256        _feePercentage
     )
         public
         onlyOwner()
@@ -235,9 +244,12 @@ contract Bridge is Ownable, ReentrancyGuard {
         require(_capacity  >= _minExchange, "Min exchange great or equal then capacity");
         require(_feePercentage > 0, "Fee equal 0");
         require(_feePercentage < MAX_FEE, "Fee great then max fee");
+        require(bytes(_symbol).length > 0, "Symbol is empty");
 
-        currencies[currenciesCount] = Currency({
+        uint256 index = currenciesCount;
+        currencies[index] = Currency({
             tokenContract: _tokenContract,
+            symbol:        _symbol,
             minExchange:   _minExchange,
             capacity:      _capacity,
             feePercentage: _feePercentage,
@@ -247,9 +259,10 @@ contract Bridge is Ownable, ReentrancyGuard {
         tokenToCurrency[_tokenContract] = currenciesCount;
         isCurrency[_tokenContract] = true;
 
-        emit ADDED_CURRENCY(_tokenContract, currenciesCount++);
+        emit ADDED_CURRENCY(_tokenContract, index, _symbol);
 
-        return currenciesCount;
+        currenciesCount++;
+        return index;
     }
 
     /// @notice              Change capacity for specific owner
@@ -352,27 +365,47 @@ contract Bridge is Ownable, ReentrancyGuard {
         return currencies[ethIndex].tokenContract;
     }
 
-    /// @notice          Convertation function for ETH and tokens
-    /// @param _spender  Address of account who spend ETH/tokens
-    /// @param _amount   Amount to convert
-    /// @param _currency Currency to convert
-    /// @dev             Internal function
+    /// @notice Get currency capacity in wei
+    /// @param  _currencyId  Id of currency
+    /// @return              Capacity amount
+    function getCapacity(uint256 _currencyId)
+        public
+        view
+        returns (uint256)
+    {
+        return currencies[_currencyId].capacity;
+    }
+
+    /// @notice Get currency balance in wei
+    /// @param  _currencyId  Id of currency
+    /// @return              Balance
+    function getBalance(uint256 _currencyId) public view returns (uint256) {
+        return currencies[_currencyId].balance;
+    }
+
+    /// @notice           Convertation function for ETH and tokens
+    /// @param _spender   Address of account who spend ETH/token
+    /// @param _recipient Recipient address (bech32)
+    /// @param _amount    Amount to convert
+    /// @param _currency  Currency to convert
+    /// @dev              Internal function
     function convertation(
         address _spender,
+        bytes32 _recipient,
         uint256 _amount,
         Currency storage _currency
     )
         internal
     {
-        require(
-            _amount >= _currency.minExchange,
-            "Amount should be great or equal then min exchage"
-        );
-
         uint256 currencyId = tokenToCurrency[_currency.tokenContract];
 
         uint256 fee = getFee(currencyId, _amount);
         uint256 realValue = _amount.sub(fee);
+
+        require(
+            realValue >= _currency.minExchange,
+            "Amount should be great or equal then min exchage"
+        );
 
         require(
             _currency.balance.add(realValue) <= _currency.capacity,
@@ -396,10 +429,7 @@ contract Bridge is Ownable, ReentrancyGuard {
                     )
                 );
 
-
             require(success, "ETH transfer is not successful");
-
-            emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         } else {
             IERC20 token = IERC20(_currency.tokenContract);
 
@@ -407,6 +437,7 @@ contract Bridge is Ownable, ReentrancyGuard {
                 token.allowance(_spender, address(this)) >= _amount,
                 "Token allowed amount is not equal to expected amount"
             );
+
             require(
                 token.transferFrom(_spender, address(this), _amount),
                 "Token transfer is not successful"
@@ -422,8 +453,8 @@ contract Bridge is Ownable, ReentrancyGuard {
                 realValue,
                 fee
             );
-
-            emit CURRENCY_EXCHANGED(currencyId, _spender, _amount);
         }
+
+        emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, exchangeId++, _amount);
     }
 }
