@@ -1,0 +1,3 @@
+.build/Dockerfile
+res/
+.gitlab-ci.yml
