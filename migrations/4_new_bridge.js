@@ -2,7 +2,7 @@
 
 /*global artifacts*/
 const BridgeFactory = artifacts.require('BridgeFactory');
-const cosmos        = require('../helpers/cosmos');
+const cosmos        = require('cosmos-lib');
 
 module.exports = (deployer) => {
     if (process.env.CONTRACT != 'NewBridge') {
@@ -97,7 +97,7 @@ module.exports = (deployer) => {
             }
         );
 
-        cosmosAddresses = cosmosAddresses.map(a => cosmos.AddressToBytes(a));
+        cosmosAddresses = cosmosAddresses.map(a => cosmos.address.getBytes32(a));
 
         console.log('\t4. Connect contracts...');
         tx = await bridgeFactory.build(

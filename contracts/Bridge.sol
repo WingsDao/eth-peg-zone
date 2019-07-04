@@ -161,7 +161,7 @@ contract Bridge is Ownable, ReentrancyGuard {
 
         ethIndex = addCurrency(
             address(0),
-            "ETH",
+            "eth",
             _ethCapacity,
             _ethMinAmount,
             _ethFeePercentage
@@ -455,6 +455,6 @@ contract Bridge is Ownable, ReentrancyGuard {
             );
         }
 
-        emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, exchangeId++, _amount);
+        emit CURRENCY_EXCHANGED(currencyId, _spender, _recipient, exchangeId++, realValue);
     }
 }

@@ -4,6 +4,7 @@
     "version": "1.0.0",
     "dependencies": {
         "bech32": "^1.1.3",
+        "cosmos-lib": "^1.0.4",
         "diff": "^3.5.0",
         "ganache-cli": "^6.4.3",
         "openzeppelin-solidity": "^2.2.0",
