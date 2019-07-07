@@ -16,10 +16,12 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice                 Happens when new token listed
     /// @param   _tokenContract Contract of token that listed
     /// @param   _currencyId    Id of currency
+    /// @param   _decimals      Currency decimals
     /// @param   _symbol        Currency symbol
     event ADDED_CURRENCY(
         address indexed _tokenContract,
         uint256 _currencyId,
+        uint8   _decimals,
         string  _symbol
     );
 
@@ -78,6 +80,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         uint256 capacity;
         uint256 feePercentage;
         uint256 balance;
+        uint8   decimals;
     }
 
     /// @notice Bank storage address
@@ -162,6 +165,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         ethIndex = addCurrency(
             address(0),
             "eth",
+            18,
             _ethCapacity,
             _ethMinAmount,
             _ethFeePercentage
@@ -230,6 +234,7 @@ contract Bridge is Ownable, ReentrancyGuard {
     function addCurrency(
         address        _tokenContract,
         string  memory _symbol,
+        uint8          _decimals,
         uint256        _capacity,
         uint256        _minExchange,
         uint256        _feePercentage
@@ -253,13 +258,14 @@ contract Bridge is Ownable, ReentrancyGuard {
             minExchange:   _minExchange,
             capacity:      _capacity,
             feePercentage: _feePercentage,
-            balance:       0
+            balance:       0,
+            decimals:      _decimals
         });
 
         tokenToCurrency[_tokenContract] = currenciesCount;
         isCurrency[_tokenContract] = true;
 
-        emit ADDED_CURRENCY(_tokenContract, index, _symbol);
+        emit ADDED_CURRENCY(_tokenContract, index, _decimals, _symbol);
 
         currenciesCount++;
         return index;
