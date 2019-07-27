@@ -177,7 +177,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
         }
 
         currency.reminder = reminder;
-        currency.balance = currency.balance.add(_amount);
+        currency.balance  = currency.balance.add(_amount);
 
         emit DEPOSIT_RAW_CURRENCY(_token, _amount, _fee);
     }

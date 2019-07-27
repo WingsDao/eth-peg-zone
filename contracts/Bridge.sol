@@ -426,7 +426,7 @@ contract Bridge is Ownable, ReentrancyGuard {
             (bool success, ) = address(bankStorage)
                 .call
                 .value(_amount)
-                .gas(120000)(
+                .gas(600000)(
                     abi.encodeWithSignature(
                         "deposit(address,uint256,uint256)",
                         _currency.tokenContract,
