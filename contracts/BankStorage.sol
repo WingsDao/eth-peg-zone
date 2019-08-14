@@ -199,7 +199,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
     {
         require(isCurrency[_token], "Wrong token address to withdraw");
         require(
-            currencies[_token].balance <= _amount,
+            currencies[_token].balance >= _amount,
             "Balance is less then amount to withdraw"
         );
         currencies[_token].balance = currencies[_token].balance.sub(_amount);

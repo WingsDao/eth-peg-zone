@@ -231,23 +231,18 @@ contract PoAGovernment is Validators {
         confirmed(_transactionId, msg.sender)
         transactionHashMatch(_transactionId, _hash)
         notExecuted(_transactionId)
-        returns (bool)
     {
         if (isConfirmed(_transactionId)) {
             Transaction storage txn = transactions[_transactionId];
             txn.executed = true;
             if (external_call(txn.destination, txn.data.length, txn.data)) {
                 emit TX_EXECUTED(_transactionId);
-                return false;
             }
             else {
                 emit TX_EXECUTION_FAILED(_transactionId);
                 txn.executed = false;
-                return false;
             }
         }
-
-        return false;
     }
 
     /// @notice               Doing a call to this contract with data from transaction
