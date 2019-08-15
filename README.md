@@ -138,7 +138,7 @@ Launch `ganache-cli` and run:
 
     truffle test
 
-You can look at implemented tests at [tests](/tests) folder in current repository.
+You can look at implemented tests at [test](/test/) folder in current repository.
 
 ## Docs
 
