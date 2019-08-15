@@ -218,6 +218,17 @@ contract BankStorage is Ownable, ReentrancyGuard {
         emit WITHDRAW_RAW_CURRENCY(_token, _recipient, _amount);
     }
 
+    /// @notice             Get fees collected by validator
+    /// @param   _validator Address of validator.
+    /// @param   _token     Token address.
+    /// @return             Amount of tokens collected by validator.
+    function getValidatorFee(
+        address _validator,
+        address _token
+    ) public view returns(uint256) {
+        return allValidators[_validator].balances[_token];
+    }
+
     /// @notice         Withdraw fee by validator
     /// @param  _token  Token address
     /// @param  _amount Amount of currency to withdraw
@@ -234,7 +245,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
         require(isCurrency[_token], "Wrong token address to withdraw fee");
 
         require(
-            allValidators[msg.sender].balances[_token] <= _amount,
+            allValidators[msg.sender].balances[_token] >= _amount,
             "Not enought fee balance to withdraw"
         );
 

@@ -102,13 +102,13 @@ contract Bridge is Ownable, ReentrancyGuard {
     uint256 public ethIndex;
 
     /// @notice All currencies list by index
-    mapping(uint256 => Currency) currencies;
+    mapping(uint256 => Currency) public currencies;
 
     /// @notice Token address to currency list
-    mapping(address => uint256) tokenToCurrency;
+    mapping(address => uint256) public tokenToCurrency;
 
     /// @notice Check if specific token address is currency
-    mapping(address => bool) isCurrency;
+    mapping(address => bool) public isCurrency;
 
     /// @notice Should work only if contract is not paused
     modifier whenNotPaused() {
@@ -287,6 +287,10 @@ contract Bridge is Ownable, ReentrancyGuard {
             _newCapacity >= currencies[_currencyId].minExchange,
             "New capacity should be great or equal then min exchange"
         );
+        require(
+            _newCapacity >= currencies[_currencyId].balance,
+            "Capacity cant be great then current balance"
+        );
 
         currencies[_currencyId].capacity = _newCapacity;
         emit CHANGED_CAPACITY(_currencyId, _newCapacity);
@@ -369,24 +373,6 @@ contract Bridge is Ownable, ReentrancyGuard {
         returns (address)
     {
         return currencies[ethIndex].tokenContract;
-    }
-
-    /// @notice Get currency capacity in wei
-    /// @param  _currencyId  Id of currency
-    /// @return              Capacity amount
-    function getCapacity(uint256 _currencyId)
-        public
-        view
-        returns (uint256)
-    {
-        return currencies[_currencyId].capacity;
-    }
-
-    /// @notice Get currency balance in wei
-    /// @param  _currencyId  Id of currency
-    /// @return              Balance
-    function getBalance(uint256 _currencyId) public view returns (uint256) {
-        return currencies[_currencyId].balance;
     }
 
     /// @notice           Convertation function for ETH and tokens
