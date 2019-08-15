@@ -134,11 +134,15 @@ It's all, to see how to work with deployed contracts visit our (documentation)(/
 
 ## Tests
 
-In progress.
+Launch `ganache-cli` and run:
+
+    truffle test
+
+You can look at implemented tests at [tests](/tests) folder in current repository.
 
 ## Docs
 
-All code covered with tests, however documentation not generated yet.
+The code covered with tests, however documentation not generated yet.
 
 ## Contribution
 

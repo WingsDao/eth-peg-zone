@@ -5,7 +5,7 @@
  */
 'use strict';
 
-/*global web3*/
+/*global web3,artifacts*/
 
 const BridgeInterface = artifacts.require('Bridge');
 

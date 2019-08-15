@@ -1,3 +1,8 @@
+/**
+ * Helper to work with PoA (multisignature) transactions.
+ *
+ * @module test/helpers/poaTxs
+ */
 'use strict';
 
 const abi = require('./abi');
