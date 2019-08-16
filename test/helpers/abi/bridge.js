@@ -1,21 +1,14 @@
 /**
- * Helper to generate abi signatures on functions calls.
+ * Helper to generate abi signatures on functions calls of Bridge contract.
  *
- * @module test/helpers/abi
+ * @module test/helpers/abi/bridge
  */
 'use strict';
 
 /*global web3,artifacts*/
 
-const BridgeInterface = artifacts.require('Bridge');
-
-function getAbiMethod(abiInterface, name, type='function') {
-    return abiInterface.abi.find(el => el.name == name && el.type == type);
-}
-
-exports.txHash = function txHash(address, data) {
-    return web3.utils.soliditySha3({t: 'address', v: address}, {t: 'bytes', v: data});
-};
+const BridgeInterface             = artifacts.require('Bridge');
+const {getAbiMethod} = require('./lib');
 
 exports.withdraw = function withdraw(currencyId, recipient, amount, gas) {
     return web3.eth.abi.encodeFunctionCall(

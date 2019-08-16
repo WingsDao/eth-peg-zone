@@ -8,15 +8,13 @@
 /*global web3,artifacts,assert*/
 require('chai').should();
 
-const bip39  = require('bip39');
-const cosmos = require('cosmos-lib');
-
 const BSInterface     = artifacts.require('BankStorage');
 const BridgeInterface = artifacts.require('Bridge');
 const PoAInterface    = artifacts.require('PoAGovernment');
 const ERC20Interface  = require('openzeppelin-solidity/build/contracts/ERC20Mintable');
 
-const abi    = require('./helpers/abi');
+const abi = require('./helpers/abi');
+const {getValidators} = require('./helpers/accounts');
 const poaTxs = require('./helpers/poaTxs');
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -59,17 +57,11 @@ describe('Bridge', () => {
     let ethIndex;
 
     before(async () => {
-        validators = (await web3.eth.getAccounts()).slice(0, 12);
-        const cosmosAddresses = validators.map(() => {
-            const mnemonic = bip39.generateMnemonic();
-            const keys     = cosmos.crypto.getKeysFromMnemonic(mnemonic);
+        const accounts = await getValidators();
 
-            const address = cosmos.address.getAddress(keys.publicKey);
-            return '0x' +  cosmos.address.getBytes32(address).toString('hex');
-        });
-
-        recipient = cosmosAddresses.shift();
-        owner = validators.shift();
+        recipient = accounts.cosmosAddresses.shift();
+        owner     = accounts.validators.shift();
+        validators = accounts.validators;
 
         const ERC20 = new web3.eth.Contract(ERC20Interface.abi, null, {
             data: ERC20Interface.bytecode
@@ -126,6 +118,8 @@ describe('Bridge', () => {
             gas: 6000000
         });
 
+        poaTxs.setPoA(poa);
+
         const ethTokenAddress = await bridge.methods.getEthTokenAddress().call();
 
         await bs.methods.setup(poa.options.address, ethTokenAddress).send({
@@ -138,7 +132,7 @@ describe('Bridge', () => {
             gas:  100000
         });
 
-        await poa.methods.setup(validators, cosmosAddresses).send({
+        await poa.methods.setup(validators, accounts.cosmosAddresses).send({
             from: owner,
             gas:  2000000
         });
@@ -172,20 +166,13 @@ describe('Bridge', () => {
     });
 
     it('should pause bridge', async () => {
-        const data = abi.pause();
+        const data = abi.bridge.pause();
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
-            gas:  6000000
-        });
+            gas:  600000
+        }, validators.slice(1));
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const isPaused = await bridge.methods.paused().call();
@@ -193,20 +180,13 @@ describe('Bridge', () => {
     });
 
     it('should resume bridge', async () => {
-        const data = abi.resume();
+        const data = abi.bridge.resume();
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
+        }, validators.slice(1));
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const isPaused = await bridge.methods.paused().call();
@@ -252,20 +232,13 @@ describe('Bridge', () => {
 
     it('should withdraw from bridge', async () => {
         const balance = await web3.eth.getBalance(owner);
-        const data = abi.withdraw(ethIndex, owner, TO_WITHDRAW, '6000000');
+        const data = abi.bridge.withdraw(ethIndex, owner, TO_WITHDRAW, '6000000');
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
+        }, validators.slice(1));
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const newBalance = await web3.eth.getBalance(owner);
@@ -303,19 +276,12 @@ describe('Bridge', () => {
     it('should change capacity', async () => {
         const newCapacity = web3.utils.toBN(ETH_CAPACITY).muln(2).toString();
 
-        const data = abi.changeCapacity(ethIndex, newCapacity);
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const data = abi.bridge.changeCapacity(ethIndex, newCapacity);
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
+        }, validators.slice(1));
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const {capacity} = await bridge.methods.currencies(ethIndex).call();
@@ -325,38 +291,23 @@ describe('Bridge', () => {
     it('should prevent change capacity less then min exchange', async () => {
         const newCapacity = '1'; // 1 wei
 
-        const data = abi.changeCapacity(ethIndex, newCapacity);
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const data = abi.bridge.changeCapacity(ethIndex, newCapacity);
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET,data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(false);
     });
 
     it('should change min exchange', async () => {
         const newMinExchange = '1';
-        const data = abi.changeMinExchange(ethIndex, newMinExchange);
+        const data = abi.bridge.changeMinExchange(ethIndex, newMinExchange);
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
+        }, validators.slice(1));
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const {minExchange} = await bridge.methods.currencies(ethIndex).call();
@@ -365,38 +316,22 @@ describe('Bridge', () => {
 
     it('should prevent change capacity less then balance', async () => {
         const newCapacity = '2';
-        const data        = abi.changeCapacity(ethIndex, newCapacity);
+        const data        = abi.bridge.changeCapacity(ethIndex, newCapacity);
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(false);
     });
 
     it('should prevent exchange because of min exchange', async () => {
-        const data    = abi.changeMinExchange(ethIndex, ETH_MIN_AMOUNT);
+        const data    = abi.bridge.changeMinExchange(ethIndex, ETH_MIN_AMOUNT);
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(true);
 
         return bridge.methods.exchange(
@@ -427,39 +362,23 @@ describe('Bridge', () => {
     });
 
     it('should prevent withdraw because of min exchange', async () =>  {
-        const data = abi.withdraw(ethIndex, owner, '1', '6000000');
+        const data = abi.bridge.withdraw(ethIndex, owner, '1', '6000000');
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(false);
     });
 
     it('should change fee', async () => {
         const newFee = web3.utils.toBN(ETH_FEE_PERCENTAGE).muln(2).toString();
-        const data   = abi.changeFee(ethIndex, newFee);
+        const data   = abi.bridge.changeFee(ethIndex, newFee);
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(true);
 
         const {feePercentage} = await bridge.methods.currencies(ethIndex).call();
@@ -467,7 +386,7 @@ describe('Bridge', () => {
     });
 
     it('should add new currency as ERC20', async () => {
-        const data = abi.addCurrency(
+        const data = abi.bridge.addCurrency(
             erc20.options.address,
             ERC_SYMBOL,
             ERC_DECIMALS,
@@ -476,18 +395,16 @@ describe('Bridge', () => {
             ETH_FEE_PERCENTAGE
         );
 
-        const receipt = await poa.methods.submitTransaction(
+        const isExecuted = await poaTxs.sendAndConfirm(
             DESTINATION.TARGET,
-            data
-        ).send({
-            from: validators[0],
-            gas:  6000000
-        });
+            data,
+            {
+                from: validators[0],
+                gas:  6000000
+            },
+            validators.slice(1)
+        );
 
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
         isExecuted.should.equal(true);
 
         const token = await bridge.methods.currencies(ERC_INDEX).call();
@@ -535,20 +452,12 @@ describe('Bridge', () => {
 
     it('should withdraw ERC20', async () => {
         const balance = await erc20.methods.balanceOf(owner).call();
-        const data    = abi.withdraw(ERC_INDEX, owner, TO_WITHDRAW, '6000000');
+        const data    = abi.bridge.withdraw(ERC_INDEX, owner, TO_WITHDRAW, '6000000');
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(true);
 
         const newBalance = await erc20.methods.balanceOf(owner).call();
@@ -561,20 +470,12 @@ describe('Bridge', () => {
     });
 
     it('should migrate bank storage owner to new one', async () => {
-        const data = abi.migration(owner);
+        const data = abi.bridge.migration(owner);
 
-        const receipt = await poa.methods.submitTransaction(
-            DESTINATION.TARGET,
-            data
-        ).send({
+        const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
-        });
-
-        const txId = receipt.events.TX_SUBMISSED.returnValues._transactionId;
-        const hash = abi.txHash(bridge.options.address, data);
-
-        const isExecuted = await poaTxs.confirmTransaction(poa, validators.slice(1), txId, hash);
+        }, validators.slice(1));
         isExecuted.should.equal(true);
 
         const bsOwner = await bs.methods.owner().call();
