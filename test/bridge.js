@@ -14,10 +14,9 @@ const PoAInterface    = artifacts.require('PoAGovernment');
 const ERC20Interface  = require('openzeppelin-solidity/build/contracts/ERC20Mintable');
 
 const abi = require('./helpers/abi');
-const {getValidators} = require('./helpers/accounts');
+const {getValidators, ZERO_ADDRESS, DESTINATION} = require('./helpers/accounts');
 const poaTxs = require('./helpers/poaTxs');
 
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const MAX_FEE = web3.utils.toBN('9999');
 
 function getFee(amount, feePercent) {
@@ -41,11 +40,6 @@ describe('Bridge', () => {
     const ERC_SYMBOL   = 'WINGS';
     const ERC_DECIMALS = '18';
     const ERC_INDEX    = '1';
-
-    const DESTINATION = {
-        SELF: '0',
-        TARGET: '1'
-    };
 
     let owner, validators, recipient;
 

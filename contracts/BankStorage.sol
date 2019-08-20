@@ -296,7 +296,7 @@ contract BankStorage is Ownable, ReentrancyGuard {
     {
         require(isValidator[_validator], "Address is not a validator");
 
-        for (uint256 i = 0; i < activeValidators.length; i++) {
+        for (uint256 i = 0; i < activeValidators.length - 1; i++) {
             if (activeValidators[i] == _validator) {
                 activeValidators[i] = activeValidators[activeValidators.length - 1];
                 break;

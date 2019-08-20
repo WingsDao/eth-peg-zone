@@ -8,3 +8,4 @@
 
 exports.bridge = require('./bridge');
 exports.lib    = require('./lib');
+exports.poa    = require('./poa');

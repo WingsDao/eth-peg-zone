@@ -29,11 +29,7 @@ contract PoAGovernment is Validators {
     /// @notice                 Happens when transaction execution failed
     /// @param  _transactionId  Id of transaction that submited
     event TX_EXECUTION_FAILED(uint256 indexed _transactionId);
-
-    /// @notice         Happens when amount of validators confirmations changed
-    /// @param _required New amount of validators confirmations to execute transaction
-    event REQUIREMENT_CHANGED(uint256 _required);
-
+    
     /// @notice Destination of call
     enum Destination {
         SELF,
@@ -48,9 +44,6 @@ contract PoAGovernment is Validators {
         bool executed;
         bytes32 hash;
     }
-
-    /// @notice Amount of confirmations to execute transaction
-    uint256 public required;
 
     /// @notice Total amount of transactions
     uint256 public transactionCount;
@@ -143,7 +136,6 @@ contract PoAGovernment is Validators {
         onlyOwner()
     {
         super.setup(_ethAddresses, _cosmosAddresses);
-        updateRequirement(_ethAddresses.length);
     }
 
     /// @notice       Allows an validator to submit and confirm a transaction
@@ -300,13 +292,6 @@ contract PoAGovernment is Validators {
         transactionCount += 1;
 
         return transactionId;
-    }
-
-    /// @notice                  Update amount of required confirmations to confirm transaction
-    /// @param  _validatorsCount Validators amount
-    function updateRequirement(uint256 _validatorsCount) private {
-        required = _validatorsCount / 2 + 1;
-        emit REQUIREMENT_CHANGED(required);
     }
 
     /// @notice            Returns total number of transactions after filers are applied

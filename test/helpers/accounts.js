@@ -8,6 +8,13 @@
 const bip39  = require('bip39');
 const cosmos = require('cosmos-lib');
 
+exports.DESTINATION = {
+    SELF:   '0',
+    TARGET: '1'
+};
+
+exports.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 exports.getValidators = async function getValidators(amount=12) {
     const validators = (await web3.eth.getAccounts()).slice(0, amount);
 

@@ -13,6 +13,10 @@ contract Validators is SelfExec, Ownable {
     /// @param  _cosmosAddress Cosmos address of validator
     event ADDED_VALIDATOR(address indexed _ethAddress, bytes32 _cosmosAddress);
 
+    /// @notice         Happens when amount of validators confirmations changed
+    /// @param _required New amount of validators confirmations to execute transaction
+    event REQUIREMENT_CHANGED(uint256 _required);
+
     /// @notice                Happens when validator replaced
     /// @param  _ethAddress    Validator that replaced with new one
     /// @param  _ethNewAddress Validator that just added
@@ -35,6 +39,9 @@ contract Validators is SelfExec, Ownable {
 
     /// @notice List of active validators
     mapping(address => bool) public isValidator;
+
+    /// @notice Amount of confirmations to execute transaction
+    uint256 public required;
 
     /// @notice Validators struct
     struct Validator {
@@ -97,6 +104,8 @@ contract Validators is SelfExec, Ownable {
         for (uint256 i = 0; i < _ethAddresses.length; i++) {
             addValidatorInternal(_ethAddresses[i], _cosmosAddresses[i]);
         }
+
+        updateRequirement(validators.length);
     }
 
     /// @notice                Adding validator to validators list
@@ -109,7 +118,9 @@ contract Validators is SelfExec, Ownable {
         onlySelf()
         returns (bool)
     {
-        return addValidatorInternal(_ethAddress, _cosmosAddress);
+        addValidatorInternal(_ethAddress, _cosmosAddress);
+        updateRequirement(validators.length);
+        return true;
     }
 
     /// @notice                Replace current validator with another one
@@ -161,7 +172,7 @@ contract Validators is SelfExec, Ownable {
         returns (bool)
     {
         require(
-            validators.length - 1 > MIN_VALIDATORS,
+            validators.length - 1 >= MIN_VALIDATORS,
             "Minimum validators amount reached"
         );
 
@@ -178,8 +189,9 @@ contract Validators is SelfExec, Ownable {
 
         bankStorage.removeActiveValidator(address(uint160(_ethAddress)));
 
+        updateRequirement(validators.length);
         emit REMOVED_VALIDATOR(_ethAddress);
-        return true;
+        return false;
     }
 
     /// @notice                Internal function for adding validator
@@ -198,7 +210,7 @@ contract Validators is SelfExec, Ownable {
         require(_ethAddress != address(0),  "Validator address is zero");
         require(_cosmosAddress.length != 0,  "Cosmos address is zero");
         require(
-            validators.length+1 < MAX_VALIDATORS,
+            validators.length+1 <= MAX_VALIDATORS,
             "Reached maximum validators amount"
         );
 
@@ -212,5 +224,12 @@ contract Validators is SelfExec, Ownable {
 
         emit ADDED_VALIDATOR(_ethAddress, _cosmosAddress);
         return true;
+    }
+
+    /// @notice                  Update amount of required confirmations to confirm transaction
+    /// @param  _validatorsCount Validators amount
+    function updateRequirement(uint256 _validatorsCount) private {
+        required = _validatorsCount / 2 + 1;
+        emit REQUIREMENT_CHANGED(required);
     }
 }
