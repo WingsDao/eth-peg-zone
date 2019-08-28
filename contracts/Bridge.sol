@@ -362,7 +362,7 @@ contract Bridge is Ownable, ReentrancyGuard {
         returns (uint256)
     {
         uint256 feePercentage = currencies[_currencyId].feePercentage;
-        return _amount * feePercentage / (MAX_FEE+1);
+        return _amount.mul(feePercentage).div(MAX_FEE.add(1));
     }
 
     /// @notice Returns ETH fake token address (e.g. 0x0000...), just for compatibility
