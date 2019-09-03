@@ -29,7 +29,7 @@ contract PoAGovernment is Validators {
     /// @notice                 Happens when transaction execution failed
     /// @param  _transactionId  Id of transaction that submited
     event TX_EXECUTION_FAILED(uint256 indexed _transactionId);
-    
+
     /// @notice Destination of call
     enum Destination {
         SELF,
@@ -50,6 +50,9 @@ contract PoAGovernment is Validators {
 
     /// @notice List of transactions by it's count
     mapping(uint256 => Transaction) public transactions;
+
+    /// @notice List of transaction ids by it's data hash.
+    mapping(bytes32 => uint256[]) public txsByHash;
 
     /// @notice Confirmations list for each transaction
     mapping(uint256 => mapping(address => bool)) public confirmations;
@@ -280,15 +283,17 @@ contract PoAGovernment is Validators {
         returns (uint256)
     {
         uint256 transactionId = transactionCount;
+        bytes32 hash = keccak256(abi.encodePacked(_destination, _data));
 
         transactions[transactionId] = Transaction({
             creator: msg.sender,
             data: _data,
             executed: false,
-            hash: keccak256(abi.encodePacked(_destination, _data)),
+            hash: hash,
             destination: _destination
         });
 
+        txsByHash[hash].push(transactionId);
         transactionCount += 1;
 
         return transactionId;
@@ -349,5 +354,21 @@ contract PoAGovernment is Validators {
                 count += 1;
 
         return count;
+    }
+
+    /// @notice        Returns transaction id by hash and index.
+    /// @param  _hash  Hash of transaction data.
+    /// @param  _index Index of transaction.
+    /// @return        Id of transaction.
+    function getTxIdByHash(bytes32 _hash, uint256 _index)
+        public
+        view
+        returns (uint256)
+    {
+        if (txsByHash[_hash].length == 0) {
+            revert('Transactions with such hash not found');
+        }
+
+        return txsByHash[_hash][_index];
     }
 }

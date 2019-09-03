@@ -5,9 +5,21 @@
  */
 'use strict';
 
-const abi = require('./abi');
+/*global web3*/
 
 let poa;
+
+/**
+ * Get tx data hash (mostly for PoA method confirm call).
+ *
+ * @param  {String} address Address of contract to execute function.
+ * @param  {String} data    Data to execute function.
+ * @return {Buffer}         Hash.
+ */
+function getDataHash(address, data) {
+    return web3.utils.soliditySha3({t: 'address', v: address}, {t: 'bytes', v: data});
+}
+
 
 exports.setPoA = function setPoA(poaContract) {
     poa = poaContract;
@@ -23,7 +35,7 @@ exports.sendAndConfirm = async function sendAndConfirm(target, data, options, va
         address = poa.options.address;
     }
 
-    const hash = abi.lib.getDataHash(address, data);
+    const hash = getDataHash(address, data);
 
     return confirmTransaction(poa, validators, txId, hash);
 };

@@ -65,10 +65,14 @@ contract Bridge is Ownable, ReentrancyGuard {
     /// @notice             Happens when government withdraw currency for converter
     /// @param  _currencyId Id of currency
     /// @param  _recipient  Address of account who will get currency
+    /// @param  _sender     Account who initiated withdraw in WB.
+    /// @param  _withdrawId Id of withdraw.
     /// @param  _amount     Amount of currency
     event CURRENCY_WITHDRAW(
         uint256 indexed _currencyId,
         address indexed _recipient,
+        bytes32 _sender,
+        uint256 _withdrawId,
         uint256 _amount
     );
 
@@ -81,6 +85,15 @@ contract Bridge is Ownable, ReentrancyGuard {
         uint256 feePercentage;
         uint256 balance;
         uint8   decimals;
+    }
+
+    /// @notice Withdraw struct describes all withdraws.
+    struct Withdraw {
+        uint256 currencyId;
+        address recipient;
+        bytes32 sender;
+        uint256 withdrawId;
+        uint256 amount;
     }
 
     /// @notice Bank storage address
@@ -109,6 +122,12 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice Check if specific token address is currency
     mapping(address => bool) public isCurrency;
+
+    /// @notice Withdraws by ids.
+    mapping(uint256 => Withdraw) public withdraws;
+
+    /// @notice Is it exist withdraw.
+    mapping(uint256 => bool) public isWithdraw;
 
     /// @notice Should work only if contract is not paused
     modifier whenNotPaused() {
@@ -193,11 +212,15 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice             Withdraw currency to recipient, could be called by owner only (government)
     /// @param  _currencyId Id of currency
+    /// @param  _withdrawId Id of withdraw.
+    /// @param  _sender     Account who initiated withdraw in WB.
     /// @param  _recipient  Recipient, who will recieve currency
     /// @param  _amount     Amount to withdraw
     /// @param  _gas        Gas limit fallback function (in case recipient is contract)
     function withdraw(
         uint256 _currencyId,
+        uint256 _withdrawId,
+        bytes32 _sender,
         address payable _recipient,
         uint256 _amount,
         uint256 _gas
@@ -211,10 +234,21 @@ contract Bridge is Ownable, ReentrancyGuard {
         Currency storage currency = currencies[_currencyId];
 
         require(_amount >= currency.minExchange, "Amount should be great or equal then min exchange");
-        currency.balance = currency.balance.sub(_amount);
+        require(!isWithdraw[_withdrawId], "Withdraw already initiated");
 
+        currency.balance = currency.balance.sub(_amount);
         bankStorage.withdraw(currency.tokenContract, _recipient, _amount, _gas);
-        emit CURRENCY_WITHDRAW(_currencyId, _recipient, _amount);
+
+        withdraws[_withdrawId] = Withdraw({
+            currencyId: _currencyId,
+            recipient:  _recipient,
+            sender:     _sender,
+            withdrawId: _withdrawId,
+            amount:     _amount
+        });
+        isWithdraw[_withdrawId] = true;
+
+        emit CURRENCY_WITHDRAW(_currencyId, _recipient, _sender, _withdrawId, _amount);
     }
 
     /// @notice           We migrate bank storage to new owner

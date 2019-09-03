@@ -13,7 +13,6 @@ const BridgeInterface = artifacts.require('Bridge');
 const PoAInterface    = artifacts.require('PoAGovernment');
 const ERC20Interface  = require('openzeppelin-solidity/build/contracts/ERC20Mintable');
 
-const abi = require('./helpers/abi');
 const {getValidators, ZERO_ADDRESS, DESTINATION} = require('./helpers/accounts');
 const poaTxs = require('./helpers/poaTxs');
 
@@ -40,6 +39,8 @@ describe('Bridge', () => {
     const ERC_SYMBOL   = 'WINGS';
     const ERC_DECIMALS = '18';
     const ERC_INDEX    = '1';
+
+    let withdrawIds = 0;
 
     let owner, validators, recipient;
 
@@ -160,7 +161,7 @@ describe('Bridge', () => {
     });
 
     it('should pause bridge', async () => {
-        const data = abi.bridge.pause();
+        const data = bridge.methods.pause().encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -174,7 +175,7 @@ describe('Bridge', () => {
     });
 
     it('should resume bridge', async () => {
-        const data = abi.bridge.resume();
+        const data = bridge.methods.resume().encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -224,9 +225,25 @@ describe('Bridge', () => {
         balance.should.equal(realAmount);
     });
 
+    /**
+    uint256 _currencyId,
+    uint256 _withdrawId,
+    bytes32 _sender,
+    address payable _recipient,
+    uint256 _amount,
+    uint256 _gas
+    **/
+
     it('should withdraw from bridge', async () => {
         const balance = await web3.eth.getBalance(owner);
-        const data = abi.bridge.withdraw(ethIndex, owner, TO_WITHDRAW, '6000000');
+        const data = bridge.methods.withdraw(
+            ethIndex,
+            withdrawIds.toString(),
+            web3.utils.randomHex(32),
+            owner,
+            TO_WITHDRAW,
+            '6000000'
+        ).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -239,6 +256,8 @@ describe('Bridge', () => {
 
         const realBalance = web3.utils.toBN(balance).add(web3.utils.toBN(TO_WITHDRAW));
         realBalance.toString().should.be.equal(newBalance);
+
+        withdrawIds++;
     });
 
     it('should update balance after withdraw', async () => {
@@ -270,7 +289,7 @@ describe('Bridge', () => {
     it('should change capacity', async () => {
         const newCapacity = web3.utils.toBN(ETH_CAPACITY).muln(2).toString();
 
-        const data = abi.bridge.changeCapacity(ethIndex, newCapacity);
+        const data = bridge.methods.changeCapacity(ethIndex, newCapacity).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
             gas:  6000000
@@ -285,7 +304,7 @@ describe('Bridge', () => {
     it('should prevent change capacity less then min exchange', async () => {
         const newCapacity = '1'; // 1 wei
 
-        const data = abi.bridge.changeCapacity(ethIndex, newCapacity);
+        const data = bridge.methods.changeCapacity(ethIndex, newCapacity).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET,data, {
             from: validators[0],
             gas:  6000000
@@ -295,7 +314,7 @@ describe('Bridge', () => {
 
     it('should change min exchange', async () => {
         const newMinExchange = '1';
-        const data = abi.bridge.changeMinExchange(ethIndex, newMinExchange);
+        const data = bridge.methods.changeMinExchange(ethIndex, newMinExchange).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -310,7 +329,7 @@ describe('Bridge', () => {
 
     it('should prevent change capacity less then balance', async () => {
         const newCapacity = '2';
-        const data        = abi.bridge.changeCapacity(ethIndex, newCapacity);
+        const data        = bridge.methods.changeCapacity(ethIndex, newCapacity).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -320,7 +339,7 @@ describe('Bridge', () => {
     });
 
     it('should prevent exchange because of min exchange', async () => {
-        const data    = abi.bridge.changeMinExchange(ethIndex, ETH_MIN_AMOUNT);
+        const data = bridge.methods.changeMinExchange(ethIndex, ETH_MIN_AMOUNT).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -335,7 +354,7 @@ describe('Bridge', () => {
         ).send({
             value: TO_EXCHANGE_LESS_MIN,
             from: owner,
-            gas:  1000000
+            gas:  6000000
         }).then(() => {
             throw new Error('Expected reject');
         }).catch(e => e.message.should.contains('Amount should be great or equal then min exchage'));
@@ -356,7 +375,14 @@ describe('Bridge', () => {
     });
 
     it('should prevent withdraw because of min exchange', async () =>  {
-        const data = abi.bridge.withdraw(ethIndex, owner, '1', '6000000');
+        const data = bridge.methods.withdraw(
+            ethIndex,
+            withdrawIds.toString(),
+            web3.utils.randomHex(32),
+            owner,
+            '1',
+            '6000000'
+        ).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -367,7 +393,7 @@ describe('Bridge', () => {
 
     it('should change fee', async () => {
         const newFee = web3.utils.toBN(ETH_FEE_PERCENTAGE).muln(2).toString();
-        const data   = abi.bridge.changeFee(ethIndex, newFee);
+        const data   = bridge.methods.changeFee(ethIndex, newFee).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -380,14 +406,14 @@ describe('Bridge', () => {
     });
 
     it('should add new currency as ERC20', async () => {
-        const data = abi.bridge.addCurrency(
+        const data = bridge.methods.addCurrency(
             erc20.options.address,
             ERC_SYMBOL,
             ERC_DECIMALS,
             ETH_CAPACITY,
             ETH_MIN_AMOUNT,
             ETH_FEE_PERCENTAGE
-        );
+        ).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(
             DESTINATION.TARGET,
@@ -446,7 +472,14 @@ describe('Bridge', () => {
 
     it('should withdraw ERC20', async () => {
         const balance = await erc20.methods.balanceOf(owner).call();
-        const data    = abi.bridge.withdraw(ERC_INDEX, owner, TO_WITHDRAW, '6000000');
+        const data    = bridge.methods.withdraw(
+            ERC_INDEX,
+            withdrawIds.toString(),
+            web3.utils.randomHex(32),
+            owner,
+            TO_WITHDRAW,
+            '6000000'
+        ).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],
@@ -464,7 +497,7 @@ describe('Bridge', () => {
     });
 
     it('should migrate bank storage owner to new one', async () => {
-        const data = abi.bridge.migration(owner);
+        const data = bridge.methods.migration(owner).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.TARGET, data, {
             from: validators[0],

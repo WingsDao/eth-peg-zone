@@ -13,7 +13,6 @@ const PoAInterface    = artifacts.require('PoAGovernment');
 const BSInterface     = artifacts.require('BankStorage');
 const {getValidators, ZERO_ADDRESS, DESTINATION} = require('./helpers/accounts');
 
-const abi = require('./helpers/abi');
 const poaTxs = require('./helpers/poaTxs');
 
 function getRequired(amount) {
@@ -81,7 +80,7 @@ describe('PoA', () => {
     });
 
     it('should reject add existing validator', async () => {
-        const data = abi.poa.addValidator(validators[0], cosmosAddresses[0]);
+        const data = poa.methods.addValidator(validators[0], cosmosAddresses[0]).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
@@ -95,7 +94,7 @@ describe('PoA', () => {
         const newValidator  = otherValidators.splice(0, 1).pop();
         const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
 
-        const data = abi.poa.addValidator(newValidator, cosmosAddress);
+        const data = poa.methods.addValidator(newValidator, cosmosAddress).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
             gas:  600000
@@ -122,7 +121,7 @@ describe('PoA', () => {
         const newValidator  = otherValidators.splice(0, 1).pop();
         const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
 
-        const data = abi.poa.replaceValidator(toReplace, newValidator, cosmosAddress);
+        const data = poa.methods.replaceValidator(toReplace, newValidator, cosmosAddress).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
             gas:  600000
@@ -140,7 +139,7 @@ describe('PoA', () => {
     it('should remove validator', async () => {
         const toRemove = validators[0];
 
-        const data       = abi.poa.removeValidator(toRemove);
+        const data       = poa.methods.removeValidator(toRemove).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
             gas:  6000000
