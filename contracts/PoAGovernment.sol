@@ -20,7 +20,7 @@ contract PoAGovernment is Validators {
     /// @notice                Happens when new transaction submited
     /// @param  _sender        Validator who submited transaction
     /// @param  _transactionId Id of transaction that submited
-    event TX_SUBMISSED(address indexed _sender, uint256 indexed _transactionId);
+    event TX_SUBMITTED(address indexed _sender, uint256 indexed _transactionId);
 
     /// @notice                Happens when transaction executed
     /// @param  _transactionId Id of transaction that just executed
@@ -159,7 +159,7 @@ contract PoAGovernment is Validators {
         }
 
         uint256 transactionId = addTransaction(destinationAddress, _data);
-        emit TX_SUBMISSED(msg.sender, transactionId);
+        emit TX_SUBMITTED(msg.sender, transactionId);
 
         confirmTransaction(transactionId, transactions[transactionId].hash);
 
