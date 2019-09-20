@@ -20,6 +20,7 @@ contract PoAGovernment is Validators {
     /// @notice                Happens when new transaction submited
     /// @param  _sender        Validator who submited transaction
     /// @param  _transactionId Id of transaction that submited
+    /// @param  _hash          Hash of transaction data.
     event TX_SUBMITTED(address indexed _sender, uint256 indexed _transactionId);
 
     /// @notice                Happens when transaction executed
