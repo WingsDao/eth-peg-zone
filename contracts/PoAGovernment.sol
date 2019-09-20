@@ -20,7 +20,8 @@ contract PoAGovernment is Validators {
     /// @notice                Happens when new transaction submited
     /// @param  _sender        Validator who submited transaction
     /// @param  _transactionId Id of transaction that submited
-    event TX_SUBMISSED(address indexed _sender, uint256 indexed _transactionId);
+    /// @param  _hash          Hash of transaction data.
+    event TX_SUBMISSED(address indexed _sender, uint256 indexed _transactionId, bytes32 _hash);
 
     /// @notice                Happens when transaction executed
     /// @param  _transactionId Id of transaction that just executed
@@ -161,10 +162,10 @@ contract PoAGovernment is Validators {
             destinationAddress = address(this);
         }
 
-        uint256 transactionId = addTransaction(destinationAddress, _data);
-        emit TX_SUBMISSED(msg.sender, transactionId);
+        var (transactionId, hash) = addTransaction(destinationAddress, _data);
+        emit TX_SUBMISSED(msg.sender, transactionId, hash);
 
-        confirmTransaction(transactionId, transactions[transactionId].hash);
+        confirmTransaction(transactionId, hash);
 
         return transactionId;
     }
@@ -274,13 +275,13 @@ contract PoAGovernment is Validators {
 
     /// @notice        Adds a new transaction to the transaction mapping, if transaction does not exist yet
     /// @param   _data Transaction data payload
-    /// @return        Returns transaction ID
+    /// @return        Returns transaction ID and hash of data.
     function addTransaction(
         address _destination,
         bytes memory _data
     )
         internal
-        returns (uint256)
+        returns (uint256, bytes32)
     {
         uint256 transactionId = transactionCount;
         bytes32 hash = keccak256(abi.encodePacked(_destination, _data));
@@ -296,7 +297,7 @@ contract PoAGovernment is Validators {
         txsByHash[hash].push(transactionId);
         transactionCount += 1;
 
-        return transactionId;
+        return (transactionId, hash);
     }
 
     /// @notice            Returns total number of transactions after filers are applied
