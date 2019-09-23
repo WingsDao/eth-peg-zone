@@ -46,7 +46,7 @@ async function sendTransaction(target, data, options) {
         data
     ).send(options);
 
-    return receipt.events.TX_SUBMISSED.returnValues._transactionId;
+    return receipt.events.TX_SUBMITTED.returnValues._transactionId;
 }
 
 async function confirmTransaction(poa, validators, txId, hash) {
