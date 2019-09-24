@@ -3,9 +3,9 @@ pragma experimental ABIEncoderV2;
 
 import "./Validators.sol";
 
-/// @title  PoAGovernment contract implements gnosis multisignature implementation and validators mechanics
+/// @title  PoAGovernment contract implements Gnosis multisignature implementation and validators mechanics
 /// @notice Based on Gnosis multisignature wallet, LGPL v3
-/// @dev    Allowing validators to post trasactions and execute them in agreee with other validators
+/// @dev    Allowing validators to post transactions and execute them in agree with other validators
 contract PoAGovernment is Validators {
     /// @notice                Happens when transaction confirmed by validator
     /// @param  _sender        Validator who confirmed transaction
@@ -17,9 +17,9 @@ contract PoAGovernment is Validators {
     /// @param  _transactionId Id of transaction that revoked by validator
     event TX_REVOKED(address indexed _sender, uint256 indexed _transactionId);
 
-    /// @notice                Happens when new transaction submited
-    /// @param  _sender        Validator who submited transaction
-    /// @param  _transactionId Id of transaction that submited
+    /// @notice                Happens when new transaction submitted
+    /// @param  _sender        Validator who submitted transaction
+    /// @param  _transactionId Id of transaction that submitted
     /// @param  _hash          Hash of transaction data.
     event TX_SUBMITTED(address indexed _sender, uint256 indexed _transactionId, bytes32 _hash);
 
@@ -28,7 +28,7 @@ contract PoAGovernment is Validators {
     event TX_EXECUTED(uint256 indexed _transactionId);
 
     /// @notice                 Happens when transaction execution failed
-    /// @param  _transactionId  Id of transaction that submited
+    /// @param  _transactionId  Id of transaction that submitted
     event TX_EXECUTION_FAILED(uint256 indexed _transactionId);
 
     /// @notice Destination of call
@@ -37,7 +37,7 @@ contract PoAGovernment is Validators {
         TARGET
     }
 
-    /// @notice Trasaction structure that could be posted by validator
+    /// @notice Transaction structure that could be posted by validator
     struct Transaction {
         address creator;
         address destination;
@@ -58,7 +58,7 @@ contract PoAGovernment is Validators {
     /// @notice Confirmations list for each transaction
     mapping(uint256 => mapping(address => bool)) public confirmations;
 
-    /// @notice Target contract, that will accept trasaction calls from validators
+    /// @notice Target contract, that will accept transaction calls from validators
     address public target;
 
     /// @notice               Check if transaction confirmed by validator
@@ -98,7 +98,7 @@ contract PoAGovernment is Validators {
     modifier transactionExists(uint256 _transactionId) {
         require(
             transactions[_transactionId].creator != address(0),
-            "Trasaction doesnt exist"
+            "Transaction doesnt exist"
         );
         _;
     }
@@ -109,7 +109,7 @@ contract PoAGovernment is Validators {
     modifier transactionHashMatch(uint256 _transactionId, bytes32 _hash) {
         require(
             transactions[_transactionId].hash == _hash,
-            "Trasaction hash doesnt match"
+            "Transaction hash doesnt match"
         );
         _;
     }
@@ -216,7 +216,7 @@ contract PoAGovernment is Validators {
 
     /// @notice                Allows any validator to execute a confirmed transaction
     /// @param  _transactionId Transaction ID
-    /// @param  _hash          Hash of transactio data
+    /// @param  _hash          Hash of transaction data
     /// @return                Returns boolean depends on success
     function executeTransaction(
         uint256 _transactionId,

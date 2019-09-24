@@ -155,4 +155,25 @@ describe('PoA', () => {
 
         required.should.be.equal(expected);
     });
+
+    it('should return correct txId by txHash', async () => {
+        const newValidator  = otherValidators.splice(0, 1).pop();
+        const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
+
+        const data = poa.methods.addValidator(newValidator, cosmosAddress).encodeABI();
+        const receipt = await poa.methods.submitTransaction(
+            DESTINATION.SELF,
+            data
+        ).send({
+            from: validators[0],
+            gas:  600000
+        });
+
+        const {_transactionId: expectedTxId, _hash: txHash } = receipt.events.TX_SUBMITTED.returnValues;
+        const transactionIndex = receipt.events.TX_SUBMITTED.transactionIndex;
+
+        const txId = await poa.methods.getTxIdByHash(txHash, transactionIndex).call();
+
+        txId.should.be.equal(expectedTxId);
+    });
 });
