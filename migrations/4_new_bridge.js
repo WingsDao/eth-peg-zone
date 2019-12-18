@@ -25,10 +25,10 @@ module.exports = (deployer) => {
                 'like ETH_ADDRESSES=0x4579...,0x2f39...(comma seperated addresses)');
         }
 
-        if (!process.env.COSMOS_ADDRESSES) {
-            throw new Error('Provide \'COSMOS_ADDRESSES\' option via environment, ' +
-                'like COSMOS_ADDRESSES=cosmos1avmaz...,' +
-                'cosmos1ghaamx..., (comma seperated addresses)');
+        if (!process.env.WB_ADDRESSES) {
+            throw new Error('Provide \'WB_ADDRESSES\' option via environment, ' +
+                'like WB_ADDRESSES=wallets1avmaz...,' +
+                'wallets1ghaamx..., (comma seperated addresses)');
         }
 
         if (!process.env.ETH_CAPACITY) {
@@ -46,16 +46,16 @@ module.exports = (deployer) => {
                 'like  ETH_FEE_PERCENTAGE=10 (maximum 10000)');
         }
 
-        const account           = process.env.ACCOUNT;
-        const ethAddresses      = process.env.ETH_ADDRESSES.split(',');
-        let   cosmosAddresses   = process.env.COSMOS_ADDRESSES.split(',');
-        const ethCapacity       = process.env.ETH_CAPACITY;
-        const ethMinExchange    = process.env.ETH_MIN_EXCHANGE;
-        const ethFeePercentage  = process.env.ETH_FEE_PERCENTAGE;
+        const account          = process.env.ACCOUNT;
+        const ethAddresses     = process.env.ETH_ADDRESSES.split(',');
+        let   wbAddresses      = process.env.WB_ADDRESSES.split(',');
+        const ethCapacity      = process.env.ETH_CAPACITY;
+        const ethMinExchange   = process.env.ETH_MIN_EXCHANGE;
+        const ethFeePercentage = process.env.ETH_FEE_PERCENTAGE;
 
-        if (ethAddresses.length != cosmosAddresses.length) {
+        if (ethAddresses.length != wbAddresses.length) {
             throw new Error('Eth addresses amount should be ' +
-                'equal Cosmos addresses amount');
+                'equal WB addresses amount');
         }
 
         const bridgeFactory = await BridgeFactory.at(process.env.BRIDGE_FACTORY);
@@ -97,12 +97,12 @@ module.exports = (deployer) => {
             }
         );
 
-        cosmosAddresses = cosmosAddresses.map(a => cosmos.address.getBytes32(a));
+        wbAddresses = wbAddresses.map(a => cosmos.address.getBytes32(a));
 
         console.log('\t4. Connect contracts...');
         tx = await bridgeFactory.build(
             ethAddresses,
-            cosmosAddresses,
+            wbAddresses,
             index,
             {
                 from:     account,
