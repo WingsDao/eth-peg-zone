@@ -7,7 +7,7 @@ WORKDIR /opt/app
 
 COPY package.json ./
 RUN npm config set unsafe-perm true && \
-    npm install -g truffle yarn && \
+    npm install -g truffle && \
     yarn install
 
 COPY . .
