@@ -129,17 +129,17 @@ contract PoAGovernment is Validators {
         target = _target;
     }
 
-    /// @notice                  Setup contract initial validators, should be called before usage of contract
-    /// @param  _ethAddresses    ETH addresses of initial validators
-    /// @param  _cosmosAddresses Cosmos addresses of initial validators
+    /// @notice               Setup contract initial validators, should be called before usage of contract
+    /// @param  _ethAddresses ETH addresses of initial validators
+    /// @param  _wbAddresses  WB addresses of initial validators
     function setup(
         address[] memory _ethAddresses,
-        bytes32[] memory _cosmosAddresses
+        bytes32[] memory _wbAddresses
     )
         public
         onlyOwner()
     {
-        super.setup(_ethAddresses, _cosmosAddresses);
+        super.setup(_ethAddresses, _wbAddresses);
     }
 
     /// @notice       Allows an validator to submit and confirm a transaction

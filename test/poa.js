@@ -20,7 +20,7 @@ function getRequired(amount) {
 }
 
 describe('PoA', () => {
-    let owner, validators, otherValidators, cosmosAddresses;
+    let owner, validators, otherValidators, wbAddresses;
     let bs, poa;
 
     before(async () => {
@@ -28,8 +28,8 @@ describe('PoA', () => {
 
         owner      = accounts.validators.shift();
         validators = accounts.validators.slice(0, 3);
-        otherValidators  = accounts.validators.slice(3);
-        cosmosAddresses  = accounts.cosmosAddresses.slice(1);
+        otherValidators = accounts.validators.slice(3);
+        wbAddresses     = accounts.wbAddresses.slice(1);
 
         const BS = new web3.eth.Contract(BSInterface.abi, null, {
             data: BSInterface.bytecode
@@ -65,7 +65,7 @@ describe('PoA', () => {
 
         await poa.methods.setup(
             validators,
-            cosmosAddresses.splice(0, 3)
+            wbAddresses.splice(0, 3)
         ).send({
             from: owner,
             gas: 6000000
@@ -80,7 +80,7 @@ describe('PoA', () => {
     });
 
     it('should reject add existing validator', async () => {
-        const data = poa.methods.addValidator(validators[0], cosmosAddresses[0]).encodeABI();
+        const data = poa.methods.addValidator(validators[0], wbAddresses[0]).encodeABI();
 
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
@@ -91,10 +91,10 @@ describe('PoA', () => {
     });
 
     it('should add new validator', async () => {
-        const newValidator  = otherValidators.splice(0, 1).pop();
-        const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
+        const newValidator = otherValidators.splice(0, 1).pop();
+        const wbAddress    = wbAddresses.splice(0, 1).pop();
 
-        const data = poa.methods.addValidator(newValidator, cosmosAddress).encodeABI();
+        const data = poa.methods.addValidator(newValidator, wbAddress).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
             gas:  600000
@@ -106,7 +106,7 @@ describe('PoA', () => {
         const addedValidator = await poa.methods.validators(validators.length-1).call();
 
         addedValidator.ethAddress.should.equal(newValidator);
-        addedValidator.cosmosAddress.should.equal(cosmosAddress);
+        addedValidator.wbAddress.should.equal(wbAddress);
     });
 
     it('should update required', async () => {
@@ -117,11 +117,11 @@ describe('PoA', () => {
     });
 
     it('should replace validator', async () => {
-        const toReplace     = validators[0];
-        const newValidator  = otherValidators.splice(0, 1).pop();
-        const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
+        const toReplace    = validators[0];
+        const newValidator = otherValidators.splice(0, 1).pop();
+        const wbAddress    = wbAddresses.splice(0, 1).pop();
 
-        const data = poa.methods.replaceValidator(toReplace, newValidator, cosmosAddress).encodeABI();
+        const data = poa.methods.replaceValidator(toReplace, newValidator, wbAddress).encodeABI();
         const isExecuted = await poaTxs.sendAndConfirm(DESTINATION.SELF, data, {
             from: validators[0],
             gas:  600000
@@ -133,7 +133,7 @@ describe('PoA', () => {
 
         const replaced = await poa.methods.validators(0).call();
         replaced.ethAddress.should.equal(validators[0]);
-        replaced.cosmosAddress.should.equal(cosmosAddress);
+        replaced.wbAddress.should.equal(wbAddress);
     });
 
     it('should remove validator', async () => {
@@ -157,10 +157,10 @@ describe('PoA', () => {
     });
 
     it('should return correct txId by txHash', async () => {
-        const newValidator  = otherValidators.splice(0, 1).pop();
-        const cosmosAddress = cosmosAddresses.splice(0, 1).pop();
+        const newValidator = otherValidators.splice(0, 1).pop();
+        const wbAddress    = wbAddresses.splice(0, 1).pop();
 
-        const data = poa.methods.addValidator(newValidator, cosmosAddress).encodeABI();
+        const data = poa.methods.addValidator(newValidator, wbAddress).encodeABI();
         const receipt = await poa.methods.submitTransaction(
             DESTINATION.SELF,
             data

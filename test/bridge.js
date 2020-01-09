@@ -54,7 +54,7 @@ describe('Bridge', () => {
     before(async () => {
         const accounts = await getValidators();
 
-        recipient = accounts.cosmosAddresses.shift();
+        recipient = accounts.wbAddresses.shift();
         owner     = accounts.validators.shift();
         validators = accounts.validators;
 
@@ -127,7 +127,7 @@ describe('Bridge', () => {
             gas:  100000
         });
 
-        await poa.methods.setup(validators, accounts.cosmosAddresses).send({
+        await poa.methods.setup(validators, accounts.wbAddresses).send({
             from: owner,
             gas:  2000000
         });

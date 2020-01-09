@@ -166,15 +166,15 @@ contract BridgeFactory is IFactory {
         return poaAddress;
     }
 
-    /// @notice                  Building and connecting all created contracts to make it work
-    /// @dev                     Stage 4, should be executed after all contracts created
-    /// @param  _ethAddresses    List of eth validators addresses for PoA Government
-    /// @param  _cosmosAddresses List of cosmos validators addresses, should match previous argument
-    /// @param  _index           Index of instance
-    /// @return                  Address of Brdige contract
+    /// @notice               Building and connecting all created contracts to make it work
+    /// @dev                  Stage 4, should be executed after all contracts created
+    /// @param  _ethAddresses List of eth validators addresses for PoA Government
+    /// @param  _wbAddresses  List of wb validators addresses, should match previous argument
+    /// @param  _index        Index of instance
+    /// @return               Address of Brdige contract
     function build(
         address[] memory _ethAddresses,
-        bytes32[] memory _cosmosAddresses,
+        bytes32[] memory _wbAddresses,
         uint256          _index
     )
         public
@@ -190,7 +190,7 @@ contract BridgeFactory is IFactory {
         bankStorage.setup(address(government), bridge.getEthTokenAddress());
         bankStorage.transferOwnership(address(bridge));
 
-        government.setup(_ethAddresses, _cosmosAddresses);
+        government.setup(_ethAddresses, _wbAddresses);
         bridge.transferOwnership(address(government));
 
         instance.ready = true;

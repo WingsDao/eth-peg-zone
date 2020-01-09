@@ -193,7 +193,7 @@ contract Bridge is Ownable, ReentrancyGuard {
 
     /// @notice             Exchanges ETH or any token
     /// @param  _currencyId Id of currency to exchange
-    /// @param  _recipient  Cosmos address to recieve currency
+    /// @param  _recipient  WB address to recieve currency
     /// @param  _amount     Amount of currency to exchange
     /// @dev                Works only if contract not paused
     function exchange(

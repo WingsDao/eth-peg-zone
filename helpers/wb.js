@@ -1,16 +1,16 @@
 /**
- * Helpers to work with Cosmos types
+ * Helpers to work with Cosmos/WB types
  *
- * @module helpers/cosmos
+ * @module helpers/wb
  */
 'use strict';
 
 const bech32 = require('bech32');
 
 /**
- * Convert cosmos address to Buffer
+ * Convert bech32 address to Buffer
  *
- * @param  {String} address Cosmos address
+ * @param  {String} address Cosmos/WB address
  * @return {Buffer}         Buffer representation of address
  */
 exports.AddressToBytes = function AddressToBytes(address) {

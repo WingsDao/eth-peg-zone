@@ -8,10 +8,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /// @title  Contract implements validators functional
 /// @notice Allowing to add, remove, replace validators, and control validators state
 contract Validators is SelfExec, Ownable {
-    /// @notice                Happens when new validator added
-    /// @param  _ethAddress    Validator that just added
-    /// @param  _cosmosAddress Cosmos address of validator
-    event ADDED_VALIDATOR(address indexed _ethAddress, bytes32 _cosmosAddress);
+    /// @notice             Happens when new validator added
+    /// @param  _ethAddress Validator that just added
+    /// @param  _wbAddress  WB address of validator
+    event ADDED_VALIDATOR(address indexed _ethAddress, bytes32 _wbAddress);
 
     /// @notice         Happens when amount of validators confirmations changed
     /// @param _required New amount of validators confirmations to execute transaction
@@ -20,11 +20,11 @@ contract Validators is SelfExec, Ownable {
     /// @notice                Happens when validator replaced
     /// @param  _ethAddress    Validator that replaced with new one
     /// @param  _ethNewAddress Validator that just added
-    /// @param  _cosmosAddress Cosmos address of new validator
+    /// @param  _wbAddress     WB address of new validator
     event REPLACED_VALIDATOR(
         address indexed _ethAddress,
         address indexed _ethNewAddress,
-        bytes32         _cosmosAddress
+        bytes32         _wbAddress
     );
 
     /// @notice              Happens when validator removed from list of validators
@@ -46,7 +46,7 @@ contract Validators is SelfExec, Ownable {
     /// @notice Validators struct
     struct Validator {
         address ethAddress;
-        bytes32 cosmosAddress;
+        bytes32 wbAddress;
     }
 
     /// @notice Array of all validators and their addressess
@@ -81,12 +81,12 @@ contract Validators is SelfExec, Ownable {
         bankStorage = BankStorage(_bankStorage);
     }
 
-    /// @notice                  Setup initial validators list
-    /// @param  _ethAddresses    Array with initial eth validators addresses
-    /// @param  _cosmosAddresses Array with initial cosmos validators addresses
+    /// @notice               Setup initial validators list
+    /// @param  _ethAddresses Array with initial eth validators addresses
+    /// @param  _wbAddresses  Array with initial wb validators addresses
     function setup(
         address[] memory _ethAddresses,
-        bytes32[] memory _cosmosAddresses
+        bytes32[] memory _wbAddresses
     )
         public
         onlyOwner()
@@ -97,28 +97,28 @@ contract Validators is SelfExec, Ownable {
             "Required minimum validators amount for initialization"
         );
         require(
-            _ethAddresses.length == _cosmosAddresses.length,
-            "Required equal amounts of eth address and cosmos addresses"
+            _ethAddresses.length == _wbAddresses.length,
+            "Required equal amounts of eth address and wb addresses"
         );
 
         for (uint256 i = 0; i < _ethAddresses.length; i++) {
-            addValidatorInternal(_ethAddresses[i], _cosmosAddresses[i]);
+            addValidatorInternal(_ethAddresses[i], _wbAddresses[i]);
         }
 
         updateRequirement(validators.length);
     }
 
-    /// @notice                Adding validator to validators list
-    /// @param  _ethAddress    Address of validator to add
-    /// @param  _cosmosAddress Cosmos address of validator
-    /// @dev                   Possible to execute only by contract itself
-    /// @return                Returns boolean depends on success or fail
-    function addValidator(address _ethAddress, bytes32 _cosmosAddress)
+    /// @notice             Adding validator to validators list
+    /// @param  _ethAddress Address of validator to add
+    /// @param  _wbAddress  WB address of validator
+    /// @dev                Possible to execute only by contract itself
+    /// @return             Returns boolean depends on success or fail
+    function addValidator(address _ethAddress, bytes32 _wbAddress)
         public
         onlySelf()
         returns (bool)
     {
-        addValidatorInternal(_ethAddress, _cosmosAddress);
+        addValidatorInternal(_ethAddress, _wbAddress);
         updateRequirement(validators.length);
         return true;
     }
@@ -126,13 +126,13 @@ contract Validators is SelfExec, Ownable {
     /// @notice                Replace current validator with another one
     /// @param  _ethAddress    Address of validator to replace
     /// @param  _ethNewAddress Address of new validator to put
-    /// @param  _cosmosAddress Cosmos address of new validator to put
+    /// @param  _wbAddress     WB address of new validator to put
     /// @dev                   Possible to execute only by contract itself
     /// @return                Returns boolean depends on success or fail
     function replaceValidator(
         address _ethAddress,
         address _ethNewAddress,
-        bytes32 _cosmosAddress
+        bytes32 _wbAddress
     )
         public
         onlySelf()
@@ -143,8 +143,8 @@ contract Validators is SelfExec, Ownable {
         for (uint256 i = 0; i < validators.length; i++) {
             if (validators[i].ethAddress == _ethAddress) {
                 validators[i] = Validator({
-                    ethAddress:    _ethNewAddress,
-                    cosmosAddress: _cosmosAddress
+                    ethAddress: _ethNewAddress,
+                    wbAddress:  _wbAddress
                 });
 
                 isValidator[_ethAddress] = false;
@@ -157,7 +157,7 @@ contract Validators is SelfExec, Ownable {
         bankStorage.removeActiveValidator(address(uint160(_ethAddress)));
         bankStorage.addValidator(address(uint160(_ethNewAddress)));
 
-        emit REPLACED_VALIDATOR(_ethAddress, _ethNewAddress, _cosmosAddress);
+        emit REPLACED_VALIDATOR(_ethAddress, _ethNewAddress, _wbAddress);
         return true;
     }
 
@@ -194,35 +194,35 @@ contract Validators is SelfExec, Ownable {
         return false;
     }
 
-    /// @notice                Internal function for adding validator
-    /// @dev                   Done to be able to add validators by this contract internal and itself
-    /// @param  _ethAddress    Address of validator
-    /// @param  _cosmosAddress Cosmos address of validator
-    /// @return                Returns boolean depends on success or fail
+    /// @notice             Internal function for adding validator
+    /// @dev                Done to be able to add validators by this contract internal and itself
+    /// @param  _ethAddress Address of validator
+    /// @param  _wbAddress  WB address of validator
+    /// @return             Returns boolean depends on success or fail
     function addValidatorInternal(
         address _ethAddress,
-        bytes32 _cosmosAddress
+        bytes32 _wbAddress
     )
         internal
         validatorDoesntExist(_ethAddress)
         returns (bool)
     {
         require(_ethAddress != address(0),  "Validator address is zero");
-        require(_cosmosAddress.length != 0,  "Cosmos address is zero");
+        require(_wbAddress.length != 0,  "WB address is zero");
         require(
             validators.length+1 <= MAX_VALIDATORS,
             "Reached maximum validators amount"
         );
 
         validators.push(Validator({
-            ethAddress:    _ethAddress,
-            cosmosAddress: _cosmosAddress
+            ethAddress: _ethAddress,
+            wbAddress:  _wbAddress
         }));
         isValidator[_ethAddress] = true;
 
         bankStorage.addValidator(address(uint160(_ethAddress)));
 
-        emit ADDED_VALIDATOR(_ethAddress, _cosmosAddress);
+        emit ADDED_VALIDATOR(_ethAddress, _wbAddress);
         return true;
     }
 
