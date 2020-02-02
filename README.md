@@ -132,6 +132,17 @@ Where:
 
 It's all, to see how to work with deployed contracts visit our (documentation)(/#docs).
 
+### Ropsten
+
+When deploy to ropsten, choose ropsten network via `--network` parameter and add `MNEMONIC`:
+
+```
+.... MNEMONIC="mnemonic words from deployer address account" truffle migrate --network ropsten
+```
+
+Where:
+* `MNEMONIC` - is usually 12 words of account mnemonic of deployer.
+
 ## Tests
 
 Launch `ganache-cli` and run:
