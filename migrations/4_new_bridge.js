@@ -1,8 +1,12 @@
 'use strict';
 
 /*global artifacts*/
-const BridgeFactory = artifacts.require('BridgeFactory');
-const cosmos        = require('cosmos-lib');
+const BridgeFactory   = artifacts.require('BridgeFactory');
+const cosmos          = require('cosmos-lib');
+const {getHDProvider} = require('../provider');
+
+const MNEMONIC = process.env.MNEMONIC;
+const ROPSTEN  = 'ropsten';
 
 module.exports = (deployer) => {
     if (process.env.CONTRACT != 'NewBridge') {
@@ -46,6 +50,10 @@ module.exports = (deployer) => {
                 'like  ETH_FEE_PERCENTAGE=10 (maximum 10000)');
         }
 
+        if (deployer.network === ROPSTEN) {
+          BridgeFactory.setProvider(getHDProvider());
+        }
+
         const account          = process.env.ACCOUNT;
         const ethAddresses     = process.env.ETH_ADDRESSES.split(',');
         let   wbAddresses      = process.env.WB_ADDRESSES.split(',');
@@ -84,6 +92,7 @@ module.exports = (deployer) => {
                 from:     account,
                 gas:      process.env.GAS_LIMIT,
                 gasPrice: process.env.GAS_PRICE
+
             }
         );
 
@@ -99,7 +108,7 @@ module.exports = (deployer) => {
 
         wbAddresses = wbAddresses.map(a => cosmos.address.getBytes32(a));
 
-        console.log('\t4. Connect contracts...');
+        console.log('\t4. Connecting contracts...');
         tx = await bridgeFactory.build(
             ethAddresses,
             wbAddresses,

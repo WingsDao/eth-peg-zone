@@ -11,6 +11,7 @@
         "global": "^4.4.0",
         "openzeppelin-solidity": "^2.2.0",
         "truffle": "^5.1.4",
+        "truffle-hdwallet-provider": "^1.0.17",
         "web3": "^1.2.1"
     },
     "scripts": {
