@@ -118,7 +118,7 @@ Where both `BANK_STORAGE_FACTORY` and `POA_FACTORY` values (addresses) could be 
 To deploy new [Bridge](/contracts/) instance:
 
 ```
-CONTRACT=NewBridge ACCOUNT=0x5195.... BRIDGE_FACTORY=0x4579... ETH_ADDRESSESS=0x4579...,0x2f39... ETH_CAPACITY=1000000000000000000000 ETH_MIN_EXCHANGE=1000 ETH_FEE_PERCENTAGE=10 GAS_LIMIT=6000000 truffle migrate
+CONTRACT=NewBridge ACCOUNT=0x5195.... BRIDGE_FACTORY=0x4579... ETH_ADDRESSESS=0x4579...,0x2f39... ETH_CAPACITY=1000000000000000000000 ETH_MIN_EXCHANGE=1000 ETH_FEE_PERCENTAGE=10 GAS_LIMIT=6000000 WB_ADDRESSES=wallets19a9...,wallets17lja...,wallets1mv2ex... truffle migrate
 ```
 
 Where:
@@ -131,6 +131,17 @@ Where:
 * `ETH_FEE_PERCENTAGE` - Fee percent that validator takes for their work for ETH exchange, minimum is 1, maximum is 9999 (normalized percent value, e.g. 100 is 1%, 1 is 0.01%, 9999 is 99.99%)
 
 It's all, to see how to work with deployed contracts visit our (documentation)(/#docs).
+
+### Ropsten
+
+When deploy to ropsten, choose ropsten network via `--network` parameter and add `MNEMONIC`:
+
+```
+.... MNEMONIC="mnemonic words from deployer address account" truffle migrate --network ropsten
+```
+
+Where:
+* `MNEMONIC` - is usually 12 words of account mnemonic of deployer.
 
 ## Tests
 
