@@ -2,4 +2,4 @@
 include:
   - project: 'DevOps/gitlab-templates'
     ref: master
-    file: '/include/blockchain/eth-peg-zone.yml'
+    file: '/include/dfinance/eth-peg-zone.yml'
